@@ -12,6 +12,7 @@ class Node:
         self.t = t
         self.parent = parent
         self.children = []
+        self.is_valid = True
 
 
 class CircleObstacle:
@@ -63,17 +64,15 @@ class SpaceTimeRRT:
         self.expand_dis = expand_dis
 
         # set nodes
-        self.nodes = []
+        self.nodes = [self.start]
 
         # set figure
-        self.animation = True
+        self.animation = False
         self.draw_result = False
-        self.fig = plt.figure()
-        self.ax = self.fig.add_subplot(111, projection='3d')
+        # self.fig = plt.figure()
+        # self.ax = self.fig.add_subplot(111, projection='3d')
 
     def planning(self):
-        self.nodes.append(self.start)
-
         while True:
             rand_node = self.get_random_node()
             nearest_node = self.get_nearest_node(rand_node)
@@ -100,9 +99,10 @@ class SpaceTimeRRT:
                 break
 
         path = self.get_final_path()
+        cost = self.get_cost(path)
         if self.draw_result:
             self.draw_path_3d_graph(path)
-        return path
+        return cost, path
 
     def is_collision(self, node, obstacles):
         for obstacle in obstacles:
@@ -133,7 +133,7 @@ class SpaceTimeRRT:
         return Node(x, y, t)
 
     def get_nearest_node(self, rand_node):
-        dlist = [(self.get_space_time_distance(node, rand_node), node) if node.t < rand_node.t else (float('inf'), node)
+        dlist = [(self.get_space_time_distance(node, rand_node), node) if node.t < rand_node.t and node.is_valid else (float('inf'), node)
                  for node in self.nodes]
         dlist.sort(key=lambda x: x[0])
         return dlist[0][1]
@@ -161,6 +161,12 @@ class SpaceTimeRRT:
         path.reverse()
         return path
 
+    def get_cost(self, path):
+        cost = 0
+        for i in range(len(path) - 1):
+            cost += self.get_space_distance(path[i], path[i + 1])
+        return cost
+
     def draw_nodes_edge_3d_graph(self):
         self.ax.cla()
         self.ax.set_xlim3d(0, self.width)
@@ -175,7 +181,10 @@ class SpaceTimeRRT:
                 x = [node.x, node.parent.x]
                 y = [node.y, node.parent.y]
                 z = [node.t, node.parent.t]
-                self.ax.plot(x, y, z, color='black')
+                if node.is_valid:
+                    self.ax.plot(x, y, z, color='black')
+                else:
+                    self.ax.plot(x, y, z, color='red')
         self.ax.scatter(self.start.x, self.start.y, self.start.t, color='green')
         self.ax.scatter(self.goal.x, self.goal.y, self.goal.t, color='red')
         for obstacle in self.obstacles:
@@ -211,17 +220,23 @@ class SpaceTimeRRT:
             z = obstacle.r * np.cos(v)
             self.ax.plot_wireframe(x, y, z, color="blue")
 
-        plt.show()
+        plt.pause(1)
 
 
 if __name__ == '__main__':
-    start = (1.0, 1.0)
-    goal = (9.0, 9.0)
+    start = (4.0, 10.0)
+    goal = (16.0, 10.0)
     obstacles = [
-        CircleObstacle(5.0, 5.0, 1.0),
+        CircleObstacle(4.0, 4.0, 4.0),
+        CircleObstacle(10.0, 6.0, 2.0),
+        CircleObstacle(16.0, 4.0, 4.0),
+        CircleObstacle(4.0, 16.0, 4.0),
+        CircleObstacle(10.0, 18.0, 2.0),
+        CircleObstacle(16.0, 16.0, 4.0),
     ]
-    space_time_rrt = SpaceTimeRRT(start=start, goal=goal, width=10.0, height=10.0, robot_radius=1,
-                                  lambda_factor=0.5, expand_dis=1, obstacles=obstacles)
-    path = space_time_rrt.planning()
+    space_time_rrt = SpaceTimeRRT(start=start, goal=goal, width=20.0, height=20.0, robot_radius=1.8,
+                                  lambda_factor=0.5, expand_dis=1.5, obstacles=obstacles)
+    cost, path = space_time_rrt.planning()
     for node in path:
         print(node.x, node.y, node.t)
+    print('cost:', cost)
