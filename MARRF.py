@@ -158,12 +158,12 @@ if __name__ == '__main__':
     lambda_factor = 0.5
     expand_distances = [robot_radius * 2 for robot_radius in robot_radii]
     obstacles = [
-        CircleObstacle(4.0, 4.0, 4),
-        CircleObstacle(10.0, 6.0, 2),
-        CircleObstacle(16.0, 4.0, 4),
-        CircleObstacle(4.0, 16.0, 4),
-        CircleObstacle(10.0, 18.0, 2),
-        CircleObstacle(16.0, 16.0, 4),
+        CircleObstacle(4, 4, 4),
+        CircleObstacle(10, 6, 2),
+        CircleObstacle(16, 4, 4),
+        CircleObstacle(4, 16, 4),
+        CircleObstacle(10, 18, 2),
+        CircleObstacle(16, 16, 4),
     ]
 
     # run MARRF
