@@ -65,7 +65,8 @@ class SpaceTimeRRT:
         self.nodes = []
 
         # set figure
-        self.animation = False
+        self.animation = True
+        self.draw_result = False
         self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111, projection='3d')
 
@@ -96,7 +97,8 @@ class SpaceTimeRRT:
                 break
 
         path = self.get_final_path()
-        self.draw_path_3d_graph(path)
+        if self.draw_result:
+            self.draw_path_3d_graph(path)
         return path
 
     def is_collision(self, node, obstacles):
@@ -210,8 +212,8 @@ class SpaceTimeRRT:
 
 
 if __name__ == '__main__':
-    start = (0.0, 0.0)
-    goal = (8.0, 8.0)
+    start = (1.0, 1.0)
+    goal = (9.0, 9.0)
     obstacles = [
         CircleObstacle(5.0, 5.0, 1.0),
     ]
