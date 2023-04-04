@@ -215,7 +215,7 @@ if __name__ == '__main__':
         CircleObstacle(5.0, 5.0, 1.0),
     ]
     space_time_rrt = SpaceTimeRRT(start=start, goal=goal, width=10.0, height=10.0, max_time=10.0, robot_radius=1,
-                                  lambda_factor=0.5, expand_dis=0.5, obstacles=obstacles)
+                                  lambda_factor=0.5, expand_dis=1, obstacles=obstacles)
     path = space_time_rrt.planning()
     for node in path:
         print(node.x, node.y, node.t)
