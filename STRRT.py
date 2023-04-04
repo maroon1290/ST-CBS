@@ -45,7 +45,7 @@ class RectangleObstacle:
 
 
 class SpaceTimeRRT:
-    def __init__(self, start, goal, width, height, max_time, robot_radius, lambda_factor, expand_dis, obstacles):
+    def __init__(self, start, goal, width, height, robot_radius, lambda_factor, expand_dis, obstacles):
         # set start and goal
         self.start = Node(start[0], start[1])
         self.goal = Node(goal[0], goal[1])
@@ -53,7 +53,7 @@ class SpaceTimeRRT:
         # set map size
         self.width = width
         self.height = height
-        self.max_time = max_time
+        self.max_time = 1
         self.obstacles = obstacles
 
         # set parameters
@@ -80,8 +80,8 @@ class SpaceTimeRRT:
                 continue
             new_node.parent = nearest_node
             self.nodes.append(new_node)
-            if new_node.t > self.max_time:
-                self.max_time = new_node.t
+            if new_node.t + 1 > self.max_time:
+                self.max_time = new_node.t + 1
 
             if self.animation:
                 self.draw_nodes_edge_3d_graph()
@@ -124,13 +124,14 @@ class SpaceTimeRRT:
     def get_random_node(self):
         x = random.uniform(0, self.width)
         y = random.uniform(0, self.height)
-        t = random.uniform(0, self.max_time)
+        t = random.randint(1, self.max_time)
         return Node(x, y, t)
 
     def get_nearest_node(self, rand_node):
-        dlist = [(node, self.get_space_time_distance(node, rand_node)) for node in self.nodes]
-        dlist.sort(key=lambda x: x[1])
-        return dlist[0][0]
+        dlist = [(self.get_space_time_distance(node, rand_node), node) if node.t < rand_node.t else (float('inf'), node)
+                 for node in self.nodes]
+        dlist.sort(key=lambda x: x[0])
+        return dlist[0][1]
 
     def steer(self, from_node, to_node):
         d = self.get_space_distance(from_node, to_node)
@@ -214,7 +215,7 @@ if __name__ == '__main__':
     obstacles = [
         CircleObstacle(5.0, 5.0, 1.0),
     ]
-    space_time_rrt = SpaceTimeRRT(start=start, goal=goal, width=10.0, height=10.0, max_time=10.0, robot_radius=1,
+    space_time_rrt = SpaceTimeRRT(start=start, goal=goal, width=10.0, height=10.0, robot_radius=1,
                                   lambda_factor=0.5, expand_dis=1, obstacles=obstacles)
     path = space_time_rrt.planning()
     for node in path:
