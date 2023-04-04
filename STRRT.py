@@ -6,7 +6,7 @@ import numpy as np
 
 
 class Node:
-    def __init__(self, x, y, t, parent=None):
+    def __init__(self, x, y, t=0, parent=None):
         self.x = x
         self.y = y
         self.parent = parent
@@ -47,8 +47,8 @@ class RectangleObstacle:
 class SpaceTimeRRT:
     def __init__(self, start, goal, width, height, max_time, robot_radius, lambda_factor, expand_dis, obstacles):
         # set start and goal
-        self.start = start
-        self.goal = goal
+        self.start = Node(start[0], start[1])
+        self.goal = Node(goal[0], goal[1])
 
         # set map size
         self.width = width
@@ -209,8 +209,8 @@ class SpaceTimeRRT:
 
 
 if __name__ == '__main__':
-    start = Node(0.0, 0.0, 0.0)
-    goal = Node(8.0, 8.0, 0.0)
+    start = (0.0, 0.0)
+    goal = (8.0, 8.0)
     obstacles = [
         CircleObstacle(5.0, 5.0, 1.0),
     ]
