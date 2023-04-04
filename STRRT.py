@@ -9,8 +9,9 @@ class Node:
     def __init__(self, x, y, t=0, parent=None):
         self.x = x
         self.y = y
-        self.parent = parent
         self.t = t
+        self.parent = parent
+        self.children = []
 
 
 class CircleObstacle:
@@ -80,6 +81,7 @@ class SpaceTimeRRT:
             if self.is_collision(new_node, self.obstacles):
                 continue
             new_node.parent = nearest_node
+            nearest_node.children.append(new_node)
             self.nodes.append(new_node)
             if new_node.t + 1 > self.max_time:
                 self.max_time = new_node.t + 1
@@ -92,6 +94,7 @@ class SpaceTimeRRT:
                 if self.is_collision(goal_node, self.obstacles):
                     continue
                 goal_node.parent = new_node
+                new_node.children.append(goal_node)
                 goal_node.t = new_node.t + 1
                 self.nodes.append(goal_node)
                 break
