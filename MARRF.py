@@ -85,7 +85,7 @@ class MARRF:
         print("cost: ", self.cost)
         for solution in self.solutions:
             for node in solution:
-                print(node.x, node.y, node.t)
+                print(f"[{node.x}, {node.y}, {node.t}],")
             print("--------------------------------")
         self.draw_paths_3d_graph(self.solutions)
 
@@ -150,8 +150,8 @@ class MARRF:
 if __name__ == '__main__':
     # set parameters
     robot_num = 4
-    starts = [(4, 10), (16, 10), (10, 4), (10, 16)]
-    goals = [(16, 10), (4, 10), (10, 16), (10, 4)]
+    starts = [(4, 10), (16, 10)]
+    goals = [(16, 10), (4, 10)]
     robot_radii = [1.5 for _ in range(robot_num)]
     width = 20
     height = 20
@@ -159,10 +159,10 @@ if __name__ == '__main__':
     expand_distances = [robot_radius * 2 for robot_radius in robot_radii]
     obstacles = [
         CircleObstacle(4.0, 4.0, 4),
-        # CircleObstacle(10.0, 6.0, 2),
+        CircleObstacle(10.0, 6.0, 2),
         CircleObstacle(16.0, 4.0, 4),
         CircleObstacle(4.0, 16.0, 4),
-        # CircleObstacle(10.0, 18.0, 2.0),
+        CircleObstacle(10.0, 18.0, 2),
         CircleObstacle(16.0, 16.0, 4),
     ]
 
