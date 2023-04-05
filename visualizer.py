@@ -24,7 +24,7 @@ if __name__ == '__main__':
     with open('solutions.yaml', 'r') as f:
         paths = yaml.load(f, Loader=yaml.FullLoader)
 
-    with open('configs/config.yaml', 'r') as f:
+    with open('configs/free_config.yaml', 'r') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
 
     # 각 로봇의 x, y 좌표와 시간을 분리
@@ -62,14 +62,11 @@ if __name__ == '__main__':
         obstacle = Circle((x, y), r, fc='gray', alpha=0.5)
         ax.add_patch(obstacle)
 
-    # 로봇 반지름 설정
-    robot_radius = 1.5
-
     # 로봇 시각화 객체 생성
     robots = []
     color_list = ['red', 'green', 'blue', 'yellow', 'purple', 'orange', 'pink', 'brown', 'gray', 'olive']
     for i, (x, y) in enumerate(zip(x_list, y_list)):
-        robot = Circle((x[0], y[0]), robot_radius, fc=color_list[i], alpha=0.5)
+        robot = Circle((x[0], y[0]), config['robot_radii'][i], fc=color_list[i], alpha=0.5)
         ax.add_patch(robot)
         robots.append(robot)
 
@@ -87,8 +84,8 @@ if __name__ == '__main__':
 
     # 경로 시각화 객체 생성
     path_lines = []
-    for x, y in zip(x_list, y_list):
-        path_line, = plt.plot([], [], 'b-', linewidth=1)
+    for i, (x, y) in enumerate(zip(x_list, y_list)):
+        path_line, = ax.plot(x[0], y[0], color=color_list[i], linewidth=1)
         path_lines.append(path_line)
 
     # 시간 텍스트 객체 생성
@@ -124,7 +121,7 @@ if __name__ == '__main__':
                 path_line.set_data(x[:current_position + 1] + (x_pos,), y[:current_position + 1] + (y_pos,))
 
             # 로봇과 원형 장애물 간 충돌 감지
-            if check_collision((x_pos, y_pos), circle_obstacles, robot_radius):
+            if check_collision((x_pos, y_pos), circle_obstacles, config['robot_radii'][i]):
                 print(f"Robot {i} collided with an obstacle!")
 
         # 각 로봇들간의 충돌 감지
@@ -132,7 +129,7 @@ if __name__ == '__main__':
             x1, y1 = robots[i].center
             x2, y2 = robots[j].center
             distance = euclidean_distance((x1, y1), (x2, y2))
-            if distance <= 2 * robot_radius:
+            if distance <= config['robot_radii'][i] + config['robot_radii'][j]:
                 print(f"Robot {i} collided with robot {j}!")
 
         # 시간 텍스트 갱신
@@ -142,6 +139,6 @@ if __name__ == '__main__':
 
     # 애니메이션 설정
     max_time = max(max(t) for t in t_list)
-    ani = FuncAnimation(fig, update, frames=np.arange(0, max_time + 0.01, 0.1), blit=True, interval=100, repeat=False)
+    ani = FuncAnimation(fig, update, frames=np.arange(0, max_time + 0.01, 1), blit=True, interval=1000, repeat=False)
 
     plt.show()
