@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import yaml
 from matplotlib.animation import FuncAnimation
-from matplotlib.patches import Circle
+from matplotlib.patches import Circle, Rectangle
 from itertools import combinations
 
 
@@ -73,6 +73,18 @@ if __name__ == '__main__':
         ax.add_patch(robot)
         robots.append(robot)
 
+    # 시작, 도착 위치 시각화 객체 생성
+    start_points = []
+    end_points = []
+
+    for i, (x, y) in enumerate(zip(x_list, y_list)):
+        start_point = Circle((x[0], y[0]), 0.2, fc=color_list[i], alpha=0.5)
+        end_point = Rectangle((x[-1] - 0.2, y[-1] - 0.2), 0.4, 0.4, fc=color_list[i], alpha=0.5)
+        ax.add_patch(start_point)
+        ax.add_patch(end_point)
+        start_points.append(start_point)
+        end_points.append(end_point)
+
     # 경로 시각화 객체 생성
     path_lines = []
     for x, y in zip(x_list, y_list):
@@ -91,6 +103,10 @@ if __name__ == '__main__':
 
     def update(frame):
         current_time = frame
+        # 시작 위치와 도착 위치 표시
+        for i, (start_point, end_point) in enumerate(zip(start_points, end_points)):
+            start_point.set_center((x_list[i][0], y_list[i][0]))
+            end_point.set_xy((x_list[i][-1] - 0.2, y_list[i][-1] - 0.2))
 
         # 각 로봇의 위치 갱신
         for i, (robot, path_line, x, y, t) in enumerate(zip(robots, path_lines, x_list, y_list, t_list)):
