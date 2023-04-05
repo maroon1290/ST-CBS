@@ -1,12 +1,15 @@
 # Author: SimJoonYeol
 
-import matplotlib.pyplot as plt
-from itertools import combinations
-import math
 import heapq
+import math
 from copy import deepcopy
+from itertools import combinations
+
+import matplotlib.pyplot as plt
 import numpy as np
-from STRRT import SpaceTimeRRT, CircleObstacle
+import yaml
+
+from STRRT import SpaceTimeRRT, CircleObstacle, RectangleObstacle
 
 
 class Conflict:
@@ -33,7 +36,8 @@ class HighLevelNode:
 
 # Multi Agent Rapidly-exploring Random Forest
 class MARRF:
-    def __init__(self, starts, goals, width, height, robot_radii, lambda_factor, expand_distances, obstacles, robot_num):
+    def __init__(self, starts, goals, width, height, robot_radii, lambda_factor, expand_distances, obstacles,
+                 robot_num):
         # set parameters
         self.starts = starts
         self.goals = goals
@@ -55,7 +59,10 @@ class MARRF:
         priority_queue = []
 
         init_node = HighLevelNode()
-        init_node.space_time_rrts = [SpaceTimeRRT(start, goal, width, height, robot_radius, lambda_factor, expand_distance, obstacles) for start, goal, robot_radius, expand_distance in zip(starts, goals, robot_radii, expand_distances)]
+        init_node.space_time_rrts = [
+            SpaceTimeRRT(start, goal, self.width, self.height, robot_radius, self.lambda_factor, expand_distance,
+                         self.obstacles) for start, goal, robot_radius, expand_distance in
+            zip(self.starts, self.goals, self.robot_radii, self.expand_distances)]
         cost, solutions = self.planning_all_space_time_rrts(init_node)
         init_node.cost = cost
         init_node.solutions = solutions
@@ -73,7 +80,8 @@ class MARRF:
             conflict_node_idx1 = high_level_node.space_time_rrts[conflict.robot1].nodes.index(conflict.robot1_node)
             conflict_node_idx2 = high_level_node.space_time_rrts[conflict.robot2].nodes.index(conflict.robot2_node)
 
-            for conflict_node_idx, robot in zip([conflict_node_idx1, conflict_node_idx2], [conflict.robot1, conflict.robot2]):
+            for conflict_node_idx, robot in zip([conflict_node_idx1, conflict_node_idx2],
+                                                [conflict.robot1, conflict.robot2]):
                 new_high_level_node = HighLevelNode()
                 new_high_level_node.space_time_rrts = deepcopy(high_level_node.space_time_rrts)
                 self.set_invalid_by_post_order(high_level_node.space_time_rrts[robot].nodes[conflict_node_idx])
@@ -148,25 +156,31 @@ class MARRF:
 
 
 if __name__ == '__main__':
-    # set parameters
-    robot_num = 4
-    starts = [(4, 10), (16, 10)]
-    goals = [(16, 10), (4, 10)]
-    robot_radii = [1.5 for _ in range(robot_num)]
-    width = 20
-    height = 20
-    lambda_factor = 0.5
-    expand_distances = [robot_radius * 2 for robot_radius in robot_radii]
-    obstacles = [
-        CircleObstacle(4, 4, 4),
-        CircleObstacle(10, 6, 2),
-        CircleObstacle(16, 4, 4),
-        CircleObstacle(4, 16, 4),
-        CircleObstacle(10, 18, 2),
-        CircleObstacle(16, 16, 4),
-    ]
+    # read config.yaml
+    with open("config.yaml", "r") as file:
+        config = yaml.safe_load(file)
+
+    # make obstacles
+    obstacles = []
+    for config_obstacle in config["obstacles"]:
+        if config_obstacle["type"] == "CircleObstacle":
+            obstacle = CircleObstacle(config_obstacle["x"], config_obstacle["y"], config_obstacle["radius"])
+        elif config_obstacle["type"] == "RectangleObstacle":
+            obstacle = RectangleObstacle(config_obstacle["x"], config_obstacle["y"], config_obstacle["width"], config_obstacle["height"])
+        else:
+            raise ValueError("invalid obstacle type")
+        obstacles.append(obstacle)
 
     # run MARRF
-    marrf = MARRF(starts, goals, width, height, robot_radii, lambda_factor, expand_distances, obstacles, robot_num)
+    marrf = MARRF(
+        config["starts"],
+        config["goals"],
+        config["width"],
+        config["height"],
+        config["robot_radii"],
+        config["lambda_factor"],
+        config["expand_distances"],
+        obstacles,
+        config["robot_num"]
+    )
     paths = marrf.planning()
-
