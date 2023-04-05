@@ -90,12 +90,8 @@ class MARRF:
                 new_high_level_node.solutions = solutions
                 heapq.heappush(priority_queue, new_high_level_node)
 
-        print("cost: ", self.cost)
-        for solution in self.solutions:
-            for node in solution:
-                print(f"[{node.x}, {node.y}, {node.t}],")
-            print("--------------------------------")
         self.draw_paths_3d_graph(self.solutions)
+        return self.cost, self.solutions
 
     def set_invalid_by_post_order(self, node):
         if node is None:
@@ -183,4 +179,20 @@ if __name__ == '__main__':
         obstacles,
         config["robot_num"]
     )
-    paths = marrf.planning()
+
+    cost, solutions = marrf.planning()
+    print("cost: ", cost)
+    for solution in solutions:
+        for node in solution:
+            print(f"[{node.x}, {node.y}, {node.t}],")
+        print("--------------------------------")
+
+    # save solutions to yaml
+    with open("solutions.yaml", "w") as file:
+        solutions_list = []
+        for solution in solutions:
+            solution_list = []
+            for node in solution:
+                solution_list.append([node.x, node.y, node.t])
+            solutions_list.append(solution_list)
+        yaml.dump(solutions_list, file)
