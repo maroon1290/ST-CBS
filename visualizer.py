@@ -24,7 +24,7 @@ if __name__ == '__main__':
     with open('solutions.yaml', 'r') as f:
         paths = yaml.load(f, Loader=yaml.FullLoader)
 
-    with open('config.yaml', 'r') as f:
+    with open('configs/config.yaml', 'r') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
 
     # 각 로봇의 x, y 좌표와 시간을 분리
