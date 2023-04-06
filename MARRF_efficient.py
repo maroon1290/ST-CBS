@@ -90,6 +90,7 @@ class MARRF:
                 new_high_level_node = HighLevelNode()
                 new_high_level_node.disable_nodes = high_level_node.disable_nodes[:]
                 new_high_level_node.disable_nodes.append(self.space_time_rrts[robot].nodes[conflict_node_idx])
+
                 for disable_node in new_high_level_node.disable_nodes:
                     self.set_invalid_by_post_order(disable_node)
                 cost, solutions = self.planning_all_space_time_rrts()
@@ -129,8 +130,9 @@ class MARRF:
     def get_first_conflict(self, paths):
         conflict = Conflict()
         max_t = max([len(path) for path in paths])
+        padded_paths = [path + [path[-1]] * (max_t - len(path)) for path in paths]
         for t in range(max_t):
-            for (robot1, path1), (robot2, path2) in list(combinations(enumerate(paths), 2)):
+            for (robot1, path1), (robot2, path2) in list(combinations(enumerate(padded_paths), 2)):
                 if t == 0:
                     continue
                 if t >= len(path1):
