@@ -4,6 +4,9 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 
+from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 
@@ -18,18 +21,34 @@ class Node:
         self.is_valid = True
 
 
+def linear_interpolate(from_node, to_node, radius):
+    euclidean_distance = math.hypot(to_node.x - from_node.x, to_node.y - from_node.y)
+    step_size = round(euclidean_distance / radius)
+    x = np.linspace(from_node.x, to_node.x, step_size)
+    y = np.linspace(from_node.y, to_node.y, step_size)
+    return x, y
+
+
 class CircleObstacle:
     def __init__(self, x, y, r):
         self.x = x
         self.y = y
         self.r = r
 
-    def is_collide(self, circle_x, circle_y, circle_r):
+    def is_collide_discrete(self, circle_x, circle_y, circle_r):
         distance = math.sqrt((circle_x - self.x) ** 2 + (circle_y - self.y) ** 2)
         if distance <= (circle_r + self.r):
             return True
         else:
             return False
+
+    def is_collide_continuous(self, from_node, to_node, radius):
+        x, y = linear_interpolate(from_node, to_node, radius)
+        for i in range(len(x)):
+            distance = math.sqrt((x[i] - self.x) ** 2 + (y[i] - self.y) ** 2)
+            if distance <= (radius + self.r):
+                return True
+        return False
 
 
 class RectangleObstacle:
@@ -39,7 +58,7 @@ class RectangleObstacle:
         self.width = width
         self.height = height
 
-    def is_collide(self, circle_x, circle_y, circle_r):
+    def is_collide_discrete(self, circle_x, circle_y, circle_r):
         if (circle_x + circle_r < self.x - self.width / 2) or \
                 (circle_x - circle_r > self.x + self.width / 2) or \
                 (circle_y + circle_r < self.y - self.height / 2) or \
@@ -47,6 +66,17 @@ class RectangleObstacle:
             return False
         else:
             return True
+
+    def is_collide_continuous(self, from_node, to_node, radius):
+        x, y = linear_interpolate(from_node, to_node, radius)
+        for i in range(len(x)):
+            if (x[i] + radius < self.x - self.width / 2) or \
+                    (x[i] - radius > self.x + self.width / 2) or \
+                    (y[i] + radius < self.y - self.height / 2) or \
+                    (y[i] - radius > self.y + self.height / 2):
+                continue
+            else:
+                return True
 
 
 class SpaceTimeRRT:
@@ -78,7 +108,7 @@ class SpaceTimeRRT:
             rand_node = self.get_random_node()
             nearest_node = self.get_nearest_node(rand_node)
             new_node = self.steer(nearest_node, rand_node)
-            if self.is_collision(new_node, self.obstacles):
+            if self.is_collision_continuous(nearest_node, new_node, self.obstacles):
                 continue
             new_node.parent = nearest_node
             nearest_node.children.append(new_node)
@@ -91,7 +121,7 @@ class SpaceTimeRRT:
 
             if self.is_near_goal(new_node):
                 goal_node = self.steer(new_node, self.goal)
-                if self.is_collision(goal_node, self.obstacles):
+                if self.is_collision_continuous(new_node, goal_node, self.obstacles):
                     continue
                 goal_node.parent = new_node
                 new_node.children.append(goal_node)
@@ -105,9 +135,15 @@ class SpaceTimeRRT:
             self.draw_path_3d_graph(path)
         return cost, path
 
-    def is_collision(self, node, obstacles):
+    def is_collision_discrete(self, node, obstacles):
         for obstacle in obstacles:
-            if obstacle.is_collide(node.x, node.y, self.robot_radius):
+            if obstacle.is_collide_discrete(node.x, node.y, self.robot_radius):
+                return True
+        return False
+
+    def is_collision_continuous(self, from_node, to_node, obstacles):
+        for obstacle in obstacles:
+            if obstacle.is_collide_continuous(from_node, to_node, self.robot_radius):
                 return True
         return False
 
@@ -168,6 +204,32 @@ class SpaceTimeRRT:
             cost += self.get_space_distance(path[i], path[i + 1])
         return cost
 
+    @staticmethod
+    def create_cube(center_x, center_y, width, height, depth):
+        x, y = center_x - width / 2, center_y - height / 2
+
+        vertices = np.array([
+            [x, y, 0],
+            [x + width, y, 0],
+            [x + width, y + height, 0],
+            [x, y + height, 0],
+            [x, y, depth],
+            [x + width, y, depth],
+            [x + width, y + height, depth],
+            [x, y + height, depth]
+        ])
+
+        faces = [
+            [vertices[0], vertices[1], vertices[5], vertices[4]],
+            [vertices[7], vertices[6], vertices[2], vertices[3]],
+            [vertices[0], vertices[1], vertices[2], vertices[3]],
+            [vertices[7], vertices[6], vertices[5], vertices[4]],
+            [vertices[7], vertices[3], vertices[0], vertices[4]],
+            [vertices[1], vertices[2], vertices[6], vertices[5]]
+        ]
+
+        return faces
+
     def draw_nodes_edge_3d_graph(self):
         ax.cla()
         ax.set_xlim3d(0, self.width)
@@ -188,13 +250,20 @@ class SpaceTimeRRT:
                     ax.plot(x, y, z, color='red')
         ax.scatter(self.start.x, self.start.y, self.start.t, color='green')
         ax.scatter(self.goal.x, self.goal.y, self.goal.t, color='red')
-        # for obstacle in self.obstacles:
-        #     u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
-        #     x = obstacle.x + obstacle.r * np.cos(u) * np.sin(v)
-        #     y = obstacle.y + obstacle.r * np.sin(u) * np.sin(v)
-        #     z = obstacle.r * np.cos(v)
-        #     ax.plot_wireframe(x, y, z, color="blue")
+        for obstacle in self.obstacles:
+            # Circle Obstacle
+            if type(obstacle) == CircleObstacle:
+                u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
+                x = obstacle.x + obstacle.r * np.cos(u) * np.sin(v)
+                y = obstacle.y + obstacle.r * np.sin(u) * np.sin(v)
+                z = obstacle.r * np.cos(v)
+                ax.plot_wireframe(x, y, z, color="blue")
 
+            # Rectangle Obstacle
+            if type(obstacle) == RectangleObstacle:
+                cube_faces = self.create_cube(obstacle.x, obstacle.y, obstacle.width, obstacle.height, self.max_time)
+                face_collection = Poly3DCollection(cube_faces, facecolor='b', alpha=0.1, linewidths=1, edgecolors='k')
+                ax.add_collection3d(face_collection)
         plt.pause(0.01)
 
     def draw_path_3d_graph(self, path):
@@ -214,29 +283,35 @@ class SpaceTimeRRT:
                 ax.plot(x, y, z, color='red')
         ax.scatter(path[0].x, path[0].y, path[0].t, color='green')
         ax.scatter(path[-1].x, path[-1].y, path[-1].t, color='red')
-        # for obstacle in self.obstacles:
-        #     u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
-        #     x = obstacle.x + obstacle.r * np.cos(u) * np.sin(v)
-        #     y = obstacle.y + obstacle.r * np.sin(u) * np.sin(v)
-        #     z = obstacle.r * np.cos(v)
-        #     ax.plot_wireframe(x, y, z, color="blue")
+        for obstacle in self.obstacles:
+            # Circle Obstacle
+            if type(obstacle) == CircleObstacle:
+                u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
+                x = obstacle.x + obstacle.r * np.cos(u) * np.sin(v)
+                y = obstacle.y + obstacle.r * np.sin(u) * np.sin(v)
+                z = obstacle.r * np.cos(v)
+                ax.plot_wireframe(x, y, z, color="blue")
 
-        plt.pause(1)
+            # Rectangle Obstacle
+            if type(obstacle) == RectangleObstacle:
+                cube_faces = self.create_cube(obstacle.x, obstacle.y, obstacle.width, obstacle.height, self.max_time)
+                face_collection = Poly3DCollection(cube_faces, facecolor='b', alpha=0.1, linewidths=1, edgecolors='k')
+                ax.add_collection3d(face_collection)
+
+        plt.show()
 
 
 if __name__ == '__main__':
     start = (4.0, 10.0)
     goal = (16.0, 10.0)
     obstacles = [
-        CircleObstacle(4.0, 4.0, 4.0),
-        CircleObstacle(10.0, 6.0, 2.0),
-        CircleObstacle(16.0, 4.0, 4.0),
-        CircleObstacle(4.0, 16.0, 4.0),
-        CircleObstacle(10.0, 18.0, 2.0),
-        CircleObstacle(16.0, 16.0, 4.0),
+        RectangleObstacle(10, 4, 20, 8),
+        RectangleObstacle(4, 16, 8, 8),
+        RectangleObstacle(10, 18, 4, 4),
+        RectangleObstacle(16, 16, 8, 8),
     ]
-    space_time_rrt = SpaceTimeRRT(start=start, goal=goal, width=20.0, height=20.0, robot_radius=1.8,
-                                  lambda_factor=0.5, expand_dis=1.5, obstacles=obstacles)
+    space_time_rrt = SpaceTimeRRT(start=start, goal=goal, width=20.0, height=20.0, robot_radius=1.5,
+                                  lambda_factor=0.5, expand_dis=3.0, obstacles=obstacles)
     cost, path = space_time_rrt.planning()
     for node in path:
         print(node.x, node.y, node.t)

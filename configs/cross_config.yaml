@@ -1,24 +1,32 @@
-robot_num: 2
+robot_num: 4
 starts:
-  - [4, 10]
-  - [16, 10]
+  - [2, 10]
+  - [18, 10]
+  - [10, 2]
+  - [10, 18]
 goals:
-  - [16, 10]
-  - [4, 10]
+  - [18, 10]
+  - [2, 10]
+  - [10, 18]
+  - [10, 2]
 robot_radii:
+  - 1.0
+  - 1.0
   - 1.0
   - 1.0
 width: 20
 height: 20
 lambda_factor: 0.5
 expand_distances:
-  - 3.0
-  - 3.0
+  - 2.0
+  - 2.0
+  - 2.0
+  - 2.0
 obstacles:
   - type: RectangleObstacle
-    x: 10
+    x: 4
     y: 4
-    width: 20
+    width: 8
     height: 8
   - type: RectangleObstacle
     x: 4
@@ -26,10 +34,10 @@ obstacles:
     width: 8
     height: 8
   - type: RectangleObstacle
-    x: 10
-    y: 18
-    width: 4
-    height: 4
+    x: 16
+    y: 4
+    width: 8
+    height: 8
   - type: RectangleObstacle
     x: 16
     y: 16

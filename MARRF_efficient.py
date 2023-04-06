@@ -9,6 +9,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import yaml
 
+from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+
 from STRRT import SpaceTimeRRT, CircleObstacle, RectangleObstacle
 
 
@@ -26,7 +29,7 @@ class Conflict:
 
 class HighLevelNode:
     def __init__(self):
-        self.space_time_rrts = []
+        self.disable_nodes = []
         self.cost = 0
         self.solutions = []
 
@@ -54,18 +57,17 @@ class MARRF:
 
         self.solutions = None
         self.cost = None
+        self.space_time_rrts = []
 
     def planning(self):
         priority_queue = []
 
         init_node = HighLevelNode()
-        init_node.space_time_rrts = [
-            SpaceTimeRRT(start, goal, self.width, self.height, robot_radius, self.lambda_factor, expand_distance,
-                         self.obstacles) for start, goal, robot_radius, expand_distance in
-            zip(self.starts, self.goals, self.robot_radii, self.expand_distances)]
-        cost, solutions = self.planning_all_space_time_rrts(init_node)
-        init_node.cost = cost
-        init_node.solutions = solutions
+        for start, goal, robot_radius, expand_distance in zip(self.starts, self.goals, self.robot_radii, self.expand_distances):
+            space_time_rrt = SpaceTimeRRT(start, goal, self.width, self.height, robot_radius, self.lambda_factor,
+                                          expand_distance, self.obstacles)
+            self.space_time_rrts.append(space_time_rrt)
+        init_node.cost, init_node.solutions = self.planning_all_space_time_rrts()
         heapq.heappush(priority_queue, init_node)
 
         while priority_queue:
@@ -77,15 +79,19 @@ class MARRF:
                 self.cost = high_level_node.cost
                 break
 
-            conflict_node_idx1 = high_level_node.space_time_rrts[conflict.robot1].nodes.index(conflict.robot1_node)
-            conflict_node_idx2 = high_level_node.space_time_rrts[conflict.robot2].nodes.index(conflict.robot2_node)
+            conflict_node_idx1 = self.space_time_rrts[conflict.robot1].nodes.index(conflict.robot1_node)
+            conflict_node_idx2 = self.space_time_rrts[conflict.robot2].nodes.index(conflict.robot2_node)
 
             for conflict_node_idx, robot in zip([conflict_node_idx1, conflict_node_idx2],
                                                 [conflict.robot1, conflict.robot2]):
                 new_high_level_node = HighLevelNode()
-                new_high_level_node.space_time_rrts = deepcopy(high_level_node.space_time_rrts)
-                self.set_invalid_by_post_order(high_level_node.space_time_rrts[robot].nodes[conflict_node_idx])
-                cost, solutions = self.planning_all_space_time_rrts(new_high_level_node)
+                new_high_level_node.disable_nodes = high_level_node.disable_nodes[:]
+                new_high_level_node.disable_nodes.append(self.space_time_rrts[robot].nodes[conflict_node_idx])
+                for disable_node in new_high_level_node.disable_nodes:
+                    self.set_invalid_by_post_order(disable_node)
+                cost, solutions = self.planning_all_space_time_rrts()
+                for disable_node in new_high_level_node.disable_nodes:
+                    self.set_valid_by_post_order(disable_node)
                 new_high_level_node.cost = cost
                 new_high_level_node.solutions = solutions
                 heapq.heappush(priority_queue, new_high_level_node)
@@ -93,18 +99,24 @@ class MARRF:
         self.draw_paths_3d_graph(self.solutions)
         return self.cost, self.solutions
 
-    def set_invalid_by_post_order(self, node):
-        if node is None:
+    def set_invalid_by_post_order(self, disable_node):
+        if disable_node is None or not disable_node.is_valid:
             return
-        node.is_valid = False
-        for child in node.children:
+        disable_node.is_valid = False
+        for child in disable_node.children:
             self.set_invalid_by_post_order(child)
 
-    @staticmethod
-    def planning_all_space_time_rrts(high_level_node):
+    def set_valid_by_post_order(self, enable_node):
+        if enable_node is None or enable_node.is_valid:
+            return
+        enable_node.is_valid = True
+        for child in enable_node.children:
+            self.set_valid_by_post_order(child)
+
+    def planning_all_space_time_rrts(self):
         solutions = []
         sum_of_cost = 0
-        for space_time_rrt in high_level_node.space_time_rrts:
+        for space_time_rrt in self.space_time_rrts:
             cost, solution = space_time_rrt.planning()
             sum_of_cost += cost
             solutions.append(solution)
@@ -121,7 +133,7 @@ class MARRF:
                     path1 = path1 + [path1[-1]] * (t - len(path1) + 1)
                 if t >= len(path2):
                     path2 = path2 + [path2[-1]] * (t - len(path2) + 1)
-                if self.is_conflict(path1[t - 1], path1[t], path2[t - 1], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
+                if self.is_conflict_continuous(path1[t - 1], path1[t], path2[t - 1], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
                     conflict.time = t
                     conflict.robot1 = robot1
                     conflict.robot2 = robot2
@@ -139,41 +151,83 @@ class MARRF:
         return x, y
 
     @staticmethod
-    def is_conflict(prev_node1, next_node1, prev_node2, next_node2, robot_radius1, robot_radius2):
-        # x1, y1 = self.linear_interpolate(prev_node1, next_node1, robot_radius1)
-        # x2, y2 = self.linear_interpolate(prev_node2, next_node2, robot_radius2)
-        # max_step = max(len(x1), len(x2))
-        # for i in range(max_step):
-        #     if i < len(x1) and i < len(x2):
-        #         if math.hypot(x1[i] - x2[i], y1[i] - y2[i]) <= (robot_radius1 + robot_radius2):
-        #             return True
-        #     elif i < len(x1):
-        #         if math.hypot(x1[i] - next_node2.x, y1[i] - next_node2.y) <= (robot_radius1 + robot_radius2):
-        #             return True
-        #     else:
-        #         if math.hypot(x2[i] - next_node1.x, y2[i] - next_node1.y) <= (robot_radius1 + robot_radius2):
-        #             return True
-        distance = math.sqrt((next_node1.x - next_node2.x) ** 2 + (next_node1.y - next_node2.y) ** 2)
+    def is_conflict_discrete(node1, node2, robot_radius1, robot_radius2):
+        distance = math.sqrt((node1.x - node2.x) ** 2 + (node1.y - node2.y) ** 2)
         if distance <= (robot_radius1 + robot_radius2):
             return True
         else:
             return False
 
+    def is_conflict_continuous(self, prev_node1, next_node1, prev_node2, next_node2, robot_radius1, robot_radius2):
+        x1, y1 = self.linear_interpolate(prev_node1, next_node1, robot_radius1)
+        x2, y2 = self.linear_interpolate(prev_node2, next_node2, robot_radius2)
+        max_step = max(len(x1), len(x2))
+        for i in range(max_step):
+            if i < len(x1) and i < len(x2):
+                if math.hypot(x1[i] - x2[i], y1[i] - y2[i]) <= (robot_radius1 + robot_radius2):
+                    return True
+            elif i < len(x1):
+                if math.hypot(x1[i] - next_node2.x, y1[i] - next_node2.y) <= (robot_radius1 + robot_radius2):
+                    return True
+            else:
+                if math.hypot(x2[i] - next_node1.x, y2[i] - next_node1.y) <= (robot_radius1 + robot_radius2):
+                    return True
+
+    @staticmethod
+    def create_cube(center_x, center_y, width, height, depth):
+        x, y = center_x - width / 2, center_y - height / 2
+
+        vertices = np.array([
+            [x, y, 0],
+            [x + width, y, 0],
+            [x + width, y + height, 0],
+            [x, y + height, 0],
+            [x, y, depth],
+            [x + width, y, depth],
+            [x + width, y + height, depth],
+            [x, y + height, depth]
+        ])
+
+        faces = [
+            [vertices[0], vertices[1], vertices[5], vertices[4]],
+            [vertices[7], vertices[6], vertices[2], vertices[3]],
+            [vertices[0], vertices[1], vertices[2], vertices[3]],
+            [vertices[7], vertices[6], vertices[5], vertices[4]],
+            [vertices[7], vertices[3], vertices[0], vertices[4]],
+            [vertices[1], vertices[2], vertices[6], vertices[5]]
+        ]
+
+        return faces
+
     def draw_paths_3d_graph(self, paths):
+        max_time = max([len(path) for path in paths])
+        self.ax.cla()
+        self.ax.set_xlim3d(0, self.width)
+        self.ax.set_ylim3d(0, self.height)
+        self.ax.set_zlim3d(0, max_time)
+        self.ax.set_xlabel('X')
+        self.ax.set_ylabel('Y')
+        self.ax.set_zlabel('T')
+        self.ax.set_title('Multi Agent Rapidly Random Forest')
         for path in paths:
             x = [node.x for node in path]
             y = [node.y for node in path]
             t = [node.t for node in path]
             self.ax.plot(x, y, t)
-        self.ax.set_xlabel('X')
-        self.ax.set_ylabel('Y')
-        self.ax.set_zlabel('Time')
-        # for obstacle in self.obstacles:
-        #     u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
-        #     x = obstacle.x + obstacle.r * np.cos(u) * np.sin(v)
-        #     y = obstacle.y + obstacle.r * np.sin(u) * np.sin(v)
-        #     z = obstacle.r * np.cos(v)
-        #     self.ax.plot_wireframe(x, y, z, color="blue")
+        for obstacle in self.obstacles:
+            # Circle Obstacle
+            if type(obstacle) == CircleObstacle:
+                u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
+                x = obstacle.x + obstacle.r * np.cos(u) * np.sin(v)
+                y = obstacle.y + obstacle.r * np.sin(u) * np.sin(v)
+                z = obstacle.r * np.cos(v)
+                self.ax.plot_wireframe(x, y, z, color="blue")
+
+            # Rectangle Obstacle
+            if type(obstacle) == RectangleObstacle:
+                cube_faces = self.create_cube(obstacle.x, obstacle.y, obstacle.width, obstacle.height, max_time)
+                face_collection = Poly3DCollection(cube_faces, facecolor='b', alpha=0.1, linewidths=1, edgecolors='k')
+                self.ax.add_collection3d(face_collection)
         plt.show()
 
 
