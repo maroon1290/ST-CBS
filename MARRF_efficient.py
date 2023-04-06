@@ -133,7 +133,14 @@ class MARRF:
                     path1 = path1 + [path1[-1]] * (t - len(path1) + 1)
                 if t >= len(path2):
                     path2 = path2 + [path2[-1]] * (t - len(path2) + 1)
-                if self.is_conflict_continuous(path1[t - 1], path1[t], path2[t - 1], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
+                # if self.is_conflict_continuous(path1[t - 1], path1[t], path2[t - 1], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
+                #     conflict.time = t
+                #     conflict.robot1 = robot1
+                #     conflict.robot2 = robot2
+                #     conflict.robot1_node = path1[t]
+                #     conflict.robot2_node = path2[t]
+                #     return conflict
+                if self.is_conflict_discrete(path1[t], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
                     conflict.time = t
                     conflict.robot1 = robot1
                     conflict.robot2 = robot2

@@ -1,5 +1,6 @@
 import math
 import random
+from abc import *
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -29,7 +30,17 @@ def linear_interpolate(from_node, to_node, radius):
     return x, y
 
 
-class CircleObstacle:
+class ObstacleBase(metaclass=ABCMeta):
+    @abstractmethod
+    def is_collide_discrete(self, circle_x, circle_y, circle_r):
+        pass
+
+    @abstractmethod
+    def is_collide_continuous(self, from_node, to_node, radius):
+        pass
+
+
+class CircleObstacle(ObstacleBase):
     def __init__(self, x, y, r):
         self.x = x
         self.y = y
@@ -51,7 +62,7 @@ class CircleObstacle:
         return False
 
 
-class RectangleObstacle:
+class RectangleObstacle(ObstacleBase):
     def __init__(self, x, y, width, height):
         self.x = x
         self.y = y
