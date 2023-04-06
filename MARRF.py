@@ -142,18 +142,18 @@ class MARRF:
         self.ax.set_xlabel('X')
         self.ax.set_ylabel('Y')
         self.ax.set_zlabel('Time')
-        for obstacle in self.obstacles:
-            u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
-            x = obstacle.x + obstacle.r * np.cos(u) * np.sin(v)
-            y = obstacle.y + obstacle.r * np.sin(u) * np.sin(v)
-            z = obstacle.r * np.cos(v)
-            self.ax.plot_wireframe(x, y, z, color="blue")
+        # for obstacle in self.obstacles:
+        #     u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
+        #     x = obstacle.x + obstacle.r * np.cos(u) * np.sin(v)
+        #     y = obstacle.y + obstacle.r * np.sin(u) * np.sin(v)
+        #     z = obstacle.r * np.cos(v)
+        #     self.ax.plot_wireframe(x, y, z, color="blue")
         plt.show()
 
 
 if __name__ == '__main__':
     # read config.yaml
-    with open("configs/free_config.yaml", "r") as file:
+    with open("configs/config.yaml", "r") as file:
         config = yaml.safe_load(file)
 
     # make obstacles

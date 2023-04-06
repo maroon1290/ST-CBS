@@ -24,7 +24,7 @@ if __name__ == '__main__':
     with open('solutions.yaml', 'r') as f:
         paths = yaml.load(f, Loader=yaml.FullLoader)
 
-    with open('configs/free_config.yaml', 'r') as f:
+    with open('configs/config.yaml', 'r') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
 
     # 각 로봇의 x, y 좌표와 시간을 분리
@@ -60,6 +60,10 @@ if __name__ == '__main__':
     # 장애물 시각화 객체 생성
     for x, y, r in circle_obstacles:
         obstacle = Circle((x, y), r, fc='gray', alpha=0.5)
+        ax.add_patch(obstacle)
+
+    for x, y, width, height in rectangle_obstacles:
+        obstacle = Rectangle((x - width / 2, y - height / 2), width, height, fc='gray', alpha=0.5)
         ax.add_patch(obstacle)
 
     # 로봇 시각화 객체 생성
@@ -139,6 +143,6 @@ if __name__ == '__main__':
 
     # 애니메이션 설정
     max_time = max(max(t) for t in t_list)
-    ani = FuncAnimation(fig, update, frames=np.arange(0, max_time + 0.01, 1), blit=True, interval=1000, repeat=False)
+    ani = FuncAnimation(fig, update, frames=np.arange(0, max_time + 0.01, 0.01), blit=True, interval=10, repeat=False)
 
     plt.show()

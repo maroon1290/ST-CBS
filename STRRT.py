@@ -4,6 +4,9 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
 
 class Node:
     def __init__(self, x, y, t=0, parent=None):
@@ -67,10 +70,8 @@ class SpaceTimeRRT:
         self.nodes = [self.start]
 
         # set figure
-        self.animation = False
-        self.draw_result = False
-        # self.fig = plt.figure()
-        # self.ax = self.fig.add_subplot(111, projection='3d')
+        self.animation = True
+        self.draw_result = True
 
     def planning(self):
         while True:
@@ -168,57 +169,57 @@ class SpaceTimeRRT:
         return cost
 
     def draw_nodes_edge_3d_graph(self):
-        self.ax.cla()
-        self.ax.set_xlim3d(0, self.width)
-        self.ax.set_ylim3d(0, self.height)
-        self.ax.set_zlim3d(0, self.max_time)
-        self.ax.set_xlabel('X')
-        self.ax.set_ylabel('Y')
-        self.ax.set_zlabel('T')
-        self.ax.set_title('Space-Time RRT')
+        ax.cla()
+        ax.set_xlim3d(0, self.width)
+        ax.set_ylim3d(0, self.height)
+        ax.set_zlim3d(0, self.max_time)
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('T')
+        ax.set_title('Space-Time RRT')
         for node in self.nodes:
             if node.parent is not None:
                 x = [node.x, node.parent.x]
                 y = [node.y, node.parent.y]
                 z = [node.t, node.parent.t]
                 if node.is_valid:
-                    self.ax.plot(x, y, z, color='black')
+                    ax.plot(x, y, z, color='black')
                 else:
-                    self.ax.plot(x, y, z, color='red')
-        self.ax.scatter(self.start.x, self.start.y, self.start.t, color='green')
-        self.ax.scatter(self.goal.x, self.goal.y, self.goal.t, color='red')
-        for obstacle in self.obstacles:
-            u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
-            x = obstacle.x + obstacle.r * np.cos(u) * np.sin(v)
-            y = obstacle.y + obstacle.r * np.sin(u) * np.sin(v)
-            z = obstacle.r * np.cos(v)
-            self.ax.plot_wireframe(x, y, z, color="blue")
+                    ax.plot(x, y, z, color='red')
+        ax.scatter(self.start.x, self.start.y, self.start.t, color='green')
+        ax.scatter(self.goal.x, self.goal.y, self.goal.t, color='red')
+        # for obstacle in self.obstacles:
+        #     u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
+        #     x = obstacle.x + obstacle.r * np.cos(u) * np.sin(v)
+        #     y = obstacle.y + obstacle.r * np.sin(u) * np.sin(v)
+        #     z = obstacle.r * np.cos(v)
+        #     ax.plot_wireframe(x, y, z, color="blue")
 
         plt.pause(0.01)
 
     def draw_path_3d_graph(self, path):
-        self.ax.cla()
-        self.ax.set_xlim3d(0, self.width)
-        self.ax.set_ylim3d(0, self.height)
-        self.ax.set_zlim3d(0, self.max_time)
-        self.ax.set_xlabel('X')
-        self.ax.set_ylabel('Y')
-        self.ax.set_zlabel('T')
-        self.ax.set_title('Space-Time RRT')
+        ax.cla()
+        ax.set_xlim3d(0, self.width)
+        ax.set_ylim3d(0, self.height)
+        ax.set_zlim3d(0, self.max_time)
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('T')
+        ax.set_title('Space-Time RRT')
         for node in path:
             if node.parent is not None:
                 x = [node.x, node.parent.x]
                 y = [node.y, node.parent.y]
                 z = [node.t, node.parent.t]
-                self.ax.plot(x, y, z, color='red')
-        self.ax.scatter(path[0].x, path[0].y, path[0].t, color='green')
-        self.ax.scatter(path[-1].x, path[-1].y, path[-1].t, color='red')
-        for obstacle in self.obstacles:
-            u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
-            x = obstacle.x + obstacle.r * np.cos(u) * np.sin(v)
-            y = obstacle.y + obstacle.r * np.sin(u) * np.sin(v)
-            z = obstacle.r * np.cos(v)
-            self.ax.plot_wireframe(x, y, z, color="blue")
+                ax.plot(x, y, z, color='red')
+        ax.scatter(path[0].x, path[0].y, path[0].t, color='green')
+        ax.scatter(path[-1].x, path[-1].y, path[-1].t, color='red')
+        # for obstacle in self.obstacles:
+        #     u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
+        #     x = obstacle.x + obstacle.r * np.cos(u) * np.sin(v)
+        #     y = obstacle.y + obstacle.r * np.sin(u) * np.sin(v)
+        #     z = obstacle.r * np.cos(v)
+        #     ax.plot_wireframe(x, y, z, color="blue")
 
         plt.pause(1)
 
