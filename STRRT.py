@@ -119,7 +119,7 @@ class SpaceTimeRRT:
             rand_node = self.get_random_node()
             nearest_node = self.get_nearest_node(rand_node)
             new_node = self.steer(nearest_node, rand_node)
-            if self.is_collision_continuous(nearest_node, new_node, self.obstacles):
+            if self.is_collision_discrete(new_node, self.obstacles):
                 continue
             new_node.parent = nearest_node
             nearest_node.children.append(new_node)
@@ -132,7 +132,7 @@ class SpaceTimeRRT:
 
             if self.is_near_goal(new_node):
                 goal_node = self.steer(new_node, self.goal)
-                if self.is_collision_continuous(new_node, goal_node, self.obstacles):
+                if self.is_collision_discrete(goal_node, self.obstacles):
                     continue
                 goal_node.parent = new_node
                 new_node.children.append(goal_node)
@@ -309,12 +309,12 @@ class SpaceTimeRRT:
                 face_collection = Poly3DCollection(cube_faces, facecolor='b', alpha=0.1, linewidths=1, edgecolors='k')
                 ax.add_collection3d(face_collection)
 
-        plt.show()
+        plt.pause(0.1)
 
 
 if __name__ == '__main__':
-    start = (4.0, 10.0)
-    goal = (16.0, 10.0)
+    start = (4, 10)
+    goal = (16, 10)
     obstacles = [
         RectangleObstacle(10, 4, 20, 8),
         RectangleObstacle(4, 16, 8, 8),

@@ -2,6 +2,7 @@
 
 import heapq
 import math
+import time
 from copy import deepcopy
 from itertools import combinations
 
@@ -70,9 +71,11 @@ class MARRF:
         init_node.cost, init_node.solutions = self.planning_all_space_time_rrts()
         heapq.heappush(priority_queue, init_node)
 
+        cur_iter = 0
         while priority_queue:
+            if cur_iter % 10 == 0:
+                print("cur_iter: {}".format(cur_iter))
             high_level_node = heapq.heappop(priority_queue)
-            print(high_level_node)
             conflict = self.get_first_conflict(high_level_node.solutions)
             if not conflict:
                 self.solutions = high_level_node.solutions
@@ -95,6 +98,7 @@ class MARRF:
                 new_high_level_node.cost = cost
                 new_high_level_node.solutions = solutions
                 heapq.heappush(priority_queue, new_high_level_node)
+            cur_iter += 1
 
         self.draw_paths_3d_graph(self.solutions)
         return self.cost, self.solutions
