@@ -115,9 +115,13 @@ class MARRF:
         max_t = max([len(path) for path in paths])
         for t in range(max_t):
             for (robot1, path1), (robot2, path2) in list(combinations(enumerate(paths), 2)):
-                if t >= len(path1) or t >= len(path2):
+                if t == 0:
                     continue
-                if self.is_conflict(path1[t], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
+                # if t >= len(path1):
+                #     path1 = path1 + [path1[-1]] * (t - len(path1) + 1)
+                # if t >= len(path2):
+                #     path2 = path2 + [path2[-1]] * (t - len(path2) + 1)
+                if self.is_conflict(path1[t - 1], path1[t], path2[t - 1], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
                     conflict.time = t
                     conflict.robot1 = robot1
                     conflict.robot2 = robot2
@@ -126,8 +130,30 @@ class MARRF:
                     return conflict
         return None
 
-    def is_conflict(self, node1, node2, robot_radius1, robot_radius2):
-        distance = math.sqrt((node1.x - node2.x) ** 2 + (node1.y - node2.y) ** 2)
+    @staticmethod
+    def linear_interpolate(prev_node, next_node, radius):
+        euclidean_distance = math.hypot(next_node.x - prev_node.x, next_node.y - prev_node.y)
+        step_size = round(euclidean_distance / radius)
+        x = np.linspace(prev_node.x, next_node.x, step_size)
+        y = np.linspace(prev_node.y, next_node.y, step_size)
+        return x, y
+
+    @staticmethod
+    def is_conflict(prev_node1, next_node1, prev_node2, next_node2, robot_radius1, robot_radius2):
+        # x1, y1 = self.linear_interpolate(prev_node1, next_node1, robot_radius1)
+        # x2, y2 = self.linear_interpolate(prev_node2, next_node2, robot_radius2)
+        # max_step = max(len(x1), len(x2))
+        # for i in range(max_step):
+        #     if i < len(x1) and i < len(x2):
+        #         if math.hypot(x1[i] - x2[i], y1[i] - y2[i]) <= (robot_radius1 + robot_radius2):
+        #             return True
+        #     elif i < len(x1):
+        #         if math.hypot(x1[i] - next_node2.x, y1[i] - next_node2.y) <= (robot_radius1 + robot_radius2):
+        #             return True
+        #     else:
+        #         if math.hypot(x2[i] - next_node1.x, y2[i] - next_node1.y) <= (robot_radius1 + robot_radius2):
+        #             return True
+        distance = math.sqrt((next_node1.x - next_node2.x) ** 2 + (next_node1.y - next_node2.y) ** 2)
         if distance <= (robot_radius1 + robot_radius2):
             return True
         else:

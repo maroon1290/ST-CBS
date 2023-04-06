@@ -70,8 +70,8 @@ class SpaceTimeRRT:
         self.nodes = [self.start]
 
         # set figure
-        self.animation = True
-        self.draw_result = True
+        self.animation = False
+        self.draw_result = False
 
     def planning(self):
         while True:
