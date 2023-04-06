@@ -124,7 +124,7 @@ if __name__ == '__main__':
                 robot.set_center((x_pos, y_pos))
                 path_line.set_data(x[:current_position + 1] + (x_pos,), y[:current_position + 1] + (y_pos,))
 
-            # 로봇과 원형 장애물 간 충돌 감지
+            # 로봇과 장애물 간 충돌 감지
             if check_collision((x_pos, y_pos), circle_obstacles, config['robot_radii'][i]):
                 print(f"Robot {i} collided with an obstacle!")
 
@@ -143,6 +143,6 @@ if __name__ == '__main__':
 
     # 애니메이션 설정
     max_time = max(max(t) for t in t_list)
-    ani = FuncAnimation(fig, update, frames=np.arange(0, max_time + 0.01, 1), blit=True, interval=1000, repeat=False)
+    ani = FuncAnimation(fig, update, frames=np.arange(0, max_time + 0.01, 0.01), blit=True, interval=10, repeat=False)
 
     plt.show()

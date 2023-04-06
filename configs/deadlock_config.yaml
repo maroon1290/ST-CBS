@@ -6,14 +6,14 @@ goals:
   - [16, 10]
   - [4, 10]
 robot_radii:
-  - 1.5
-  - 1.5
+  - 1.2
+  - 1.2
 width: 20
 height: 20
-lambda_factor: 0.5
+lambda_factor: 0.9
 expand_distances:
-  - 1.2
-  - 1.2
+  - 3.0
+  - 3.0
 obstacles:
   - type: RectangleObstacle
     x: 10

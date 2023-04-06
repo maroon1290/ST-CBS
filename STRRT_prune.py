@@ -109,10 +109,12 @@ class SpaceTimeRRT:
         self.expand_dis = expand_dis
 
         # set nodes
-        self.nodes = [self.start]
+        self.nodes = set()
+        self.nodes.add(self.start)
+        self.last_node = None
 
         # set figure
-        self.animation = True
+        self.animation = False
         self.draw_result = False
 
     def planning(self):
@@ -127,11 +129,11 @@ class SpaceTimeRRT:
 
             new_node.parent = nearest_node
             nearest_node.children.append(new_node)
-            self.nodes.append(new_node)
+            self.nodes.add(new_node)
             if new_node.t + 1 > self.max_time:
                 self.max_time = new_node.t + 1
 
-            if self.animation:
+            if self.animation or len(self.nodes) % 100 == 0:
                 self.draw_nodes_edge_3d_graph()
 
             if self.is_near_goal(new_node):
@@ -141,7 +143,8 @@ class SpaceTimeRRT:
                 goal_node.parent = new_node
                 new_node.children.append(goal_node)
                 goal_node.t = new_node.t + 1
-                self.nodes.append(goal_node)
+                self.nodes.add(goal_node)
+                self.last_node = goal_node
                 break
 
         path = self.get_final_path()
@@ -206,7 +209,7 @@ class SpaceTimeRRT:
 
     def get_final_path(self):
         path = []
-        last_node = self.nodes[-1]
+        last_node = self.last_node
         while last_node is not None:
             path.append(last_node)
             last_node = last_node.parent
@@ -279,8 +282,7 @@ class SpaceTimeRRT:
                 cube_faces = self.create_cube(obstacle.x, obstacle.y, obstacle.width, obstacle.height, self.max_time)
                 face_collection = Poly3DCollection(cube_faces, facecolor='b', alpha=0.1, linewidths=1, edgecolors='k')
                 ax.add_collection3d(face_collection)
-        # plt.pause(0.01)
-        plt.show()
+        plt.pause(0.01)
 
     def draw_path_3d_graph(self, path):
         ax.cla()
