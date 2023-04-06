@@ -92,7 +92,7 @@ class RectangleObstacle(ObstacleBase):
 
 
 class SpaceTimeRRT:
-    def __init__(self, start, goal, width, height, robot_radius, lambda_factor, expand_dis, obstacles):
+    def __init__(self, start, goal, width, height, robot_radius, lambda_factor, expand_dis, obstacles, collision_check_type):
         # set start and goal
         self.start = Node(start[0], start[1])
         self.goal = Node(goal[0], goal[1])
@@ -107,6 +107,7 @@ class SpaceTimeRRT:
         self.robot_radius = robot_radius
         self.lambda_factor = lambda_factor
         self.expand_dis = expand_dis
+        self.collision_check_type = collision_check_type
 
         # set nodes
         self.nodes = set()
@@ -122,7 +123,10 @@ class SpaceTimeRRT:
             rand_node = self.get_random_node()
             nearest_node = self.get_nearest_node(rand_node)
             new_node = self.steer(nearest_node, rand_node)
-            if self.is_collision_discrete(new_node, self.obstacles):
+
+            if self.collision_check_type == "discrete" and self.is_collision_discrete(new_node, self.obstacles):
+                continue
+            elif self.collision_check_type == "continuous" and self.is_collision_continuous(nearest_node, new_node, self.obstacles):
                 continue
 
             print("node num: ", len(self.nodes))
@@ -133,12 +137,14 @@ class SpaceTimeRRT:
             if new_node.t + 1 > self.max_time:
                 self.max_time = new_node.t + 1
 
-            if self.animation or len(self.nodes) % 100 == 0:
+            if self.animation:
                 self.draw_nodes_edge_3d_graph()
 
             if self.is_near_goal(new_node):
                 goal_node = self.steer(new_node, self.goal)
-                if self.is_collision_discrete(goal_node, self.obstacles):
+                if self.collision_check_type == "discrete" and self.is_collision_discrete(goal_node, self.obstacles):
+                    continue
+                elif self.collision_check_type == "continuous" and self.is_collision_continuous(new_node, goal_node, self.obstacles):
                     continue
                 goal_node.parent = new_node
                 new_node.children.append(goal_node)
@@ -329,7 +335,7 @@ if __name__ == '__main__':
         RectangleObstacle(16, 16, 8, 8),
     ]
     space_time_rrt = SpaceTimeRRT(start=start, goal=goal, width=20.0, height=20.0, robot_radius=1.5,
-                                  lambda_factor=0.5, expand_dis=3.0, obstacles=obstacles)
+                                  lambda_factor=0.5, expand_dis=3.0, obstacles=obstacles, collision_check_type='discrete')
     cost, path = space_time_rrt.planning()
     for node in path:
         print(node.x, node.y, node.t)

@@ -41,7 +41,7 @@ class HighLevelNode:
 # Multi Agent Rapidly-exploring Random Forest
 class MARRF:
     def __init__(self, starts, goals, width, height, robot_radii, lambda_factor, expand_distances, obstacles,
-                 robot_num):
+                 robot_num, collision_check_type):
         # set parameters
         self.starts = starts
         self.goals = goals
@@ -52,6 +52,7 @@ class MARRF:
         self.lambda_factor = lambda_factor
         self.expand_distances = expand_distances
         self.obstacles = obstacles
+        self.collision_check_type = collision_check_type
 
         self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111, projection='3d')
@@ -66,7 +67,7 @@ class MARRF:
         init_node = HighLevelNode()
         for start, goal, robot_radius, expand_distance in zip(self.starts, self.goals, self.robot_radii, self.expand_distances):
             space_time_rrt = SpaceTimeRRT(start, goal, self.width, self.height, robot_radius, self.lambda_factor,
-                                          expand_distance, self.obstacles)
+                                          expand_distance, self.obstacles, self.collision_check_type)
             self.space_time_rrts.append(space_time_rrt)
         init_node.cost, init_node.solutions = self.planning_all_space_time_rrts()
         heapq.heappush(priority_queue, init_node)
@@ -126,20 +127,22 @@ class MARRF:
                     path1 = path1 + [path1[-1]] * (t - len(path1) + 1)
                 if t >= len(path2):
                     path2 = path2 + [path2[-1]] * (t - len(path2) + 1)
-                # if self.is_conflict_continuous(path1[t - 1], path1[t], path2[t - 1], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
-                #     conflict.time = t
-                #     conflict.robot1 = robot1
-                #     conflict.robot2 = robot2
-                #     conflict.robot1_node = path1[t]
-                #     conflict.robot2_node = path2[t]
-                #     return conflict
-                if self.is_conflict_discrete(path1[t], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
-                    conflict.time = t
-                    conflict.robot1 = robot1
-                    conflict.robot2 = robot2
-                    conflict.robot1_node = path1[t]
-                    conflict.robot2_node = path2[t]
-                    return conflict
+                if self.collision_check_type == "continuous":
+                    if self.is_conflict_continuous(path1[t - 1], path1[t], path2[t - 1], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
+                        conflict.time = t
+                        conflict.robot1 = robot1
+                        conflict.robot2 = robot2
+                        conflict.robot1_node = path1[t]
+                        conflict.robot2_node = path2[t]
+                        return conflict
+                elif self.collision_check_type == "discrete":
+                    if self.is_conflict_discrete(path1[t], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
+                        conflict.time = t
+                        conflict.robot1 = robot1
+                        conflict.robot2 = robot2
+                        conflict.robot1_node = path1[t]
+                        conflict.robot2_node = path2[t]
+                        return conflict
         return None
 
     @staticmethod
@@ -233,7 +236,7 @@ class MARRF:
 
 if __name__ == '__main__':
     # read config.yaml
-    with open("configs/deadlock_config.yaml", "r") as file:
+    with open("configs/free_config.yaml", "r") as file:
         config = yaml.safe_load(file)
 
     # make obstacles
@@ -257,7 +260,8 @@ if __name__ == '__main__':
         config["lambda_factor"],
         config["expand_distances"],
         obstacles,
-        config["robot_num"]
+        config["robot_num"],
+        config["collision_check_type"],
     )
 
     cost, solutions = marrf.planning()
