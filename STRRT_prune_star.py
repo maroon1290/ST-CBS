@@ -2,6 +2,7 @@ import math
 import random
 import time
 from abc import *
+from collections import deque
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,7 +20,7 @@ class Node:
         self.y = y
         self.t = t
         self.parent = parent
-        self.children = []
+        self.children = deque()
         self.is_valid = True
         self.space_time_cost = None
 
@@ -93,7 +94,7 @@ class RectangleObstacle(ObstacleBase):
 
 
 class SpaceTimeRRT:
-    def __init__(self, start, goal, width, height, robot_radius, lambda_factor, expand_dis, obstacles, rewire_radius, max_count=5000):
+    def __init__(self, start, goal, width, height, robot_radius, lambda_factor, expand_dis, obstacles, rewire_radius, max_count=1000):
         # set start and goal
         self.start = Node(start[0], start[1])
         self.start.space_time_cost = 0
@@ -120,7 +121,7 @@ class SpaceTimeRRT:
 
         # set figure
         self.animation = False
-        self.draw_result = False
+        self.draw_result = True
 
     def planning(self):
         count = 0
@@ -129,10 +130,8 @@ class SpaceTimeRRT:
             rand_node = self.get_random_node()
             nearest_node = self.get_nearest_node(rand_node)
             new_node = self.steer(nearest_node, rand_node)
-            if self.is_collision_continuous(nearest_node, new_node, self.obstacles):
+            if self.is_collision_discrete(new_node, self.obstacles):
                 continue
-
-            print("node num: ", len(self.nodes))
 
             # connect new node to tree
             new_node.parent = nearest_node
@@ -146,12 +145,12 @@ class SpaceTimeRRT:
             if new_node.t + 1 > self.max_time:
                 self.max_time = new_node.t + 1
 
-            if self.animation and count % 500 == 0:
+            if self.animation and count % 5 == 0:
                 self.draw_nodes_edge_3d_graph()
 
             if self.is_near_goal(new_node):
                 goal_node = self.steer(new_node, self.goal)
-                if self.is_collision_continuous(new_node, goal_node, self.obstacles):
+                if self.is_collision_discrete(goal_node, self.obstacles):
                     continue
                 goal_node.t = new_node.t + 1
                 goal_node.parent = new_node
@@ -160,7 +159,6 @@ class SpaceTimeRRT:
                 self.nodes.add(goal_node)
                 if self.last_node is None or goal_node.space_time_cost < self.last_node.space_time_cost:
                     self.last_node = goal_node
-                    break
 
         path = self.get_final_path()
         cost = self.get_cost(path)
@@ -236,9 +234,11 @@ class SpaceTimeRRT:
                 continue
             if node.is_valid is False:
                 continue
+            if new_node.t - node.t != 1:
+                continue
             potential_cost = node.space_time_cost + self.get_space_time_distance(node, new_node)
             if potential_cost < new_node.space_time_cost:
-                if self.is_collision_continuous(node, new_node, self.obstacles):
+                if self.is_collision_discrete(new_node, self.obstacles):
                     continue
                 if new_node.parent is not None:
                     new_node.parent.children.remove(new_node)
