@@ -94,7 +94,7 @@ class RectangleObstacle(ObstacleBase):
 
 
 class SpaceTimeRRT:
-    def __init__(self, start, goal, width, height, robot_radius, lambda_factor, expand_dis, obstacles, rewire_radius, max_count=1000):
+    def __init__(self, start, goal, width, height, robot_radius, lambda_factor, expand_dis, obstacles, near_radius, max_iter=1000):
         # set start and goal
         self.start = Node(start[0], start[1])
         self.start.space_time_cost = 0
@@ -111,54 +111,52 @@ class SpaceTimeRRT:
         self.robot_radius = robot_radius
         self.lambda_factor = lambda_factor
         self.expand_dis = expand_dis
-        self.max_count = max_count
+        self.max_iter = max_iter
 
         # set nodes
-        self.nodes = set()
-        self.nodes.add(self.start)
+        self.node_list = [self.start]
         self.last_node = None
-        self.rewire_radius = rewire_radius
+        self.near_radius = near_radius
 
         # set figure
         self.animation = False
         self.draw_result = True
 
     def planning(self):
-        count = 0
-        while count < self.max_count:
-            count += 1
+        for i in range(self.max_iter):
             rand_node = self.get_random_node()
             nearest_node = self.get_nearest_node(rand_node)
             new_node = self.steer(nearest_node, rand_node)
-            if self.is_collision_discrete(new_node, self.obstacles):
-                continue
 
-            # connect new node to tree
-            new_node.parent = nearest_node
-            nearest_node.children.append(new_node)
-            new_node.space_time_cost = nearest_node.space_time_cost + self.get_space_time_distance(nearest_node, new_node)
-            self.nodes.add(new_node)
+            # check collision
+            if not self.is_collision_discrete(new_node, self.obstacles):
+                # connect new node to tree
+                self.node_list.append(new_node)
 
-            # rewire
-            self.rewire(new_node)
+                # get neighbor nodes
+                neighbor_nodes = self.get_near_nodes(new_node, self.near_radius)
 
-            if new_node.t + 1 > self.max_time:
-                self.max_time = new_node.t + 1
+                # rewire
+                self.choose_parent(new_node, neighbor_nodes)
+                self.rewire(new_node, neighbor_nodes)
 
-            if self.animation and count % 5 == 0:
-                self.draw_nodes_edge_3d_graph()
+                if new_node.t + 1 > self.max_time:
+                    self.max_time = new_node.t + 1
 
-            if self.is_near_goal(new_node):
-                goal_node = self.steer(new_node, self.goal)
-                if self.is_collision_discrete(goal_node, self.obstacles):
-                    continue
-                goal_node.t = new_node.t + 1
-                goal_node.parent = new_node
-                new_node.children.append(goal_node)
-                goal_node.space_time_cost = new_node.space_time_cost + self.get_space_time_distance(new_node, goal_node)
-                self.nodes.add(goal_node)
-                if self.last_node is None or goal_node.space_time_cost < self.last_node.space_time_cost:
-                    self.last_node = goal_node
+                if self.animation:
+                    self.draw_nodes_edge_3d_graph()
+
+                if self.is_near_goal(new_node):
+                    goal_node = self.steer(new_node, self.goal)
+                    if self.is_collision_discrete(goal_node, self.obstacles):
+                        continue
+                    goal_node.t = new_node.t + 1
+                    goal_node.parent = new_node
+                    new_node.children.append(goal_node)
+                    goal_node.space_time_cost = new_node.space_time_cost + self.get_space_time_distance(new_node, goal_node)
+                    self.nodes.add(goal_node)
+                    if self.last_node is None or goal_node.space_time_cost < self.last_node.space_time_cost:
+                        self.last_node = goal_node
 
         path = self.get_final_path()
         cost = self.get_cost(path)
@@ -195,37 +193,53 @@ class SpaceTimeRRT:
         return space_time_distance
 
     def get_random_node(self):
-        x = random.uniform(0, self.width)
-        y = random.uniform(0, self.height)
-        t = random.randint(1, self.max_time)
-        return Node(x, y, t)
+        return Node(
+            np.random.uniform(0, self.width),
+            np.random.uniform(0, self.height),
+            np.random.uniform(1, self.max_time))
 
     def get_nearest_node(self, rand_node):
-        dlist = [(self.get_space_time_distance(node, rand_node), node) if node.t < rand_node.t and node.is_valid else (float('inf'), node)
-                 for node in self.nodes]
-        dlist.sort(key=lambda x: x[0])
-        return dlist[0][1]
+        return self.node_list[int(np.argmin([math.hypot(rand_node.x - node.x, rand_node.y - node.y) if rand_node.t > node.t else float('inf') for node in self.node_list]))]
 
     def steer(self, from_node, to_node):
         d = self.get_space_distance(from_node, to_node)
         if d > self.expand_dis:
             d = self.expand_dis
         theta = math.atan2(to_node.y - from_node.y, to_node.x - from_node.x)
-        x = from_node.x + d * math.cos(theta)
-        y = from_node.y + d * math.sin(theta)
-        t = from_node.t + 1
-        return Node(x, y, t, from_node)
+        new_node = Node(
+            from_node.x + d * math.cos(theta),
+            from_node.y + d * math.sin(theta),
+            from_node.t + 1
+        )
+        new_node.parent = from_node
+        new_node.space_time_cost = from_node.space_time_cost + self.get_space_time_distance(from_node, new_node)
+        return new_node
 
     def is_near_goal(self, node):
         d = self.get_space_distance(node, self.goal)
         return d <= self.expand_dis
 
-    def get_nodes_in_radius(self, center_node, radius):
+    def get_near_nodes(self, center_node, radius):
         nodes_in_radius = []
-        for node in self.nodes:
+        for node in self.node_list:
+            if node == center_node:
+                continue
             if self.get_space_time_distance(center_node, node) <= radius:
                 nodes_in_radius.append(node)
         return nodes_in_radius
+
+    def choose_parent(self, new_node, nearby_nodes):
+        for node in nearby_nodes:
+            if node == new_node.parent:
+                continue
+            if node.is_valid is False:
+                continue
+            if new_node.t - node.t != 1:
+                continue
+            potential_cost = node.space_time_cost + self.get_space_time_distance(node, new_node)
+            if potential_cost < new_node.space_time_cost:
+                new_node.parent = node
+                new_node.space_time_cost = potential_cost
 
     def rewire(self, new_node):
         nearby_nodes = self.get_nodes_in_radius(new_node, self.rewire_radius)
@@ -363,14 +377,9 @@ if __name__ == '__main__':
     goal = (18, 10)
     obstacles = [
         CircleObstacle(10, 10, 5),
-        # RectangleObstacle(10, 10, 10, 10),
-        # RectangleObstacle(10, 4, 20, 8),
-        # RectangleObstacle(4, 16, 8, 8),
-        # RectangleObstacle(10, 18, 4, 4),
-        # RectangleObstacle(16, 16, 8, 8),
     ]
     space_time_rrt = SpaceTimeRRT(start=start, goal=goal, width=20.0, height=20.0, robot_radius=1.5,
-                                  lambda_factor=0.5, expand_dis=3.0, obstacles=obstacles, rewire_radius=5.0)
+                                  lambda_factor=0.5, expand_dis=3.0, obstacles=obstacles, near_radius=5.0)
     cost, path = space_time_rrt.planning()
     for node in path:
         print(node.x, node.y, node.t)
