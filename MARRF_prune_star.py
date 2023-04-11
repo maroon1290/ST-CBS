@@ -13,7 +13,7 @@ import yaml
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
-from STRRT_prune import SpaceTimeRRT, CircleObstacle, RectangleObstacle
+from STRRT_prune_star import SpaceTimeRRT, CircleObstacle, RectangleObstacle
 
 
 class Conflict:
@@ -30,6 +30,7 @@ class Conflict:
 
 class HighLevelNode:
     def __init__(self):
+        self.space_time_rrts = []
         self.disable_nodes = []
         self.cost = 0
         self.solutions = []
@@ -58,7 +59,6 @@ class MARRF:
 
         self.solutions = None
         self.cost = None
-        self.space_time_rrts = []
 
     def planning(self):
         priority_queue = []
@@ -66,14 +66,14 @@ class MARRF:
         init_node = HighLevelNode()
         for start, goal, robot_radius, expand_distance in zip(self.starts, self.goals, self.robot_radii, self.expand_distances):
             space_time_rrt = SpaceTimeRRT(start, goal, self.width, self.height, robot_radius, self.lambda_factor,
-                                          expand_distance, self.obstacles)
-            self.space_time_rrts.append(space_time_rrt)
-        init_node.cost, init_node.solutions = self.planning_all_space_time_rrts()
+                                          expand_distance, self.obstacles, 5)
+            init_node.space_time_rrts.append(space_time_rrt)
+        init_node.cost, init_node.solutions = self.planning_all_space_time_rrts(init_node)
         heapq.heappush(priority_queue, init_node)
 
         cur_iter = 0
         while priority_queue:
-            if cur_iter % 10 == 0:
+            if cur_iter:
                 print("cur_iter: {}".format(cur_iter))
             high_level_node = heapq.heappop(priority_queue)
 
@@ -87,11 +87,12 @@ class MARRF:
 
             for robot, conflict_node in zip([conflict.robot1, conflict.robot2], [conflict.robot1_node, conflict.robot2_node]):
                 new_high_level_node = HighLevelNode()
-
-                for child in conflict_node.children:
-                    self.prune_by_post_order(self.space_time_rrts[robot], child)
+                new_high_level_node.space_time_rrts = deepcopy(high_level_node.space_time_rrts)
+                while conflict_node.children:
+                    child = conflict_node.children
+                    self.prune_by_post_order(init_node.space_time_rrts[robot], child)
                 conflict_node.is_valid = False
-                cost, solutions = self.planning_all_space_time_rrts()
+                cost, solutions = self.planning_all_space_time_rrts(new_high_level_node)
                 new_high_level_node.cost = cost
                 new_high_level_node.solutions = solutions
                 heapq.heappush(priority_queue, new_high_level_node)
@@ -103,15 +104,16 @@ class MARRF:
     def prune_by_post_order(self, tree, prune_node):
         if prune_node is None:
             return
-        for child in prune_node.children:
+        while prune_node.children:
+            child = prune_node.children
             self.prune_by_post_order(tree, child)
-        tree.nodes.discard(prune_node)
+        tree.nodes.remove(prune_node)
         del prune_node
 
-    def planning_all_space_time_rrts(self):
+    def planning_all_space_time_rrts(self, high_level_node):
         solutions = []
         sum_of_cost = 0
-        for space_time_rrt in self.space_time_rrts:
+        for space_time_rrt in high_level_node.space_time_rrts:
             cost, solution = space_time_rrt.planning()
             sum_of_cost += cost
             solutions.append(solution)
@@ -129,20 +131,20 @@ class MARRF:
                     path1 = path1 + [path1[-1]] * (t - len(path1) + 1)
                 if t >= len(path2):
                     path2 = path2 + [path2[-1]] * (t - len(path2) + 1)
-                if self.is_conflict_continuous(path1[t - 1], path1[t], path2[t - 1], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
-                    conflict.time = t
-                    conflict.robot1 = robot1
-                    conflict.robot2 = robot2
-                    conflict.robot1_node = path1[t]
-                    conflict.robot2_node = path2[t]
-                    return conflict
-                # if self.is_conflict_discrete(path1[t], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
+                # if self.is_conflict_continuous(path1[t - 1], path1[t], path2[t - 1], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
                 #     conflict.time = t
                 #     conflict.robot1 = robot1
                 #     conflict.robot2 = robot2
                 #     conflict.robot1_node = path1[t]
                 #     conflict.robot2_node = path2[t]
                 #     return conflict
+                if self.is_conflict_discrete(path1[t], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
+                    conflict.time = t
+                    conflict.robot1 = robot1
+                    conflict.robot2 = robot2
+                    conflict.robot1_node = path1[t]
+                    conflict.robot2_node = path2[t]
+                    return conflict
         return None
 
     @staticmethod

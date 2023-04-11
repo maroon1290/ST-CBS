@@ -2,6 +2,7 @@ import math
 import random
 import time
 from abc import *
+from collections import deque
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,15 +20,14 @@ class Node:
         self.y = y
         self.t = t
         self.parent = parent
-        self.children = []
+        self.children = deque()
         self.is_valid = True
+        self.space_time_cost = None
 
 
 def linear_interpolate(from_node, to_node, radius):
     euclidean_distance = math.hypot(to_node.x - from_node.x, to_node.y - from_node.y)
     step_size = round(euclidean_distance / radius)
-    if step_size < 2:
-        step_size = 2
     x = np.linspace(from_node.x, to_node.x, step_size)
     y = np.linspace(from_node.y, to_node.y, step_size)
     return x, y
@@ -35,7 +35,7 @@ def linear_interpolate(from_node, to_node, radius):
 
 class ObstacleBase(metaclass=ABCMeta):
     @abstractmethod
-    def is_collide_discrete(self, robot_x, robot_y, robot_r):
+    def is_collide_discrete(self, circle_x, circle_y, circle_r):
         pass
 
     @abstractmethod
@@ -49,17 +49,18 @@ class CircleObstacle(ObstacleBase):
         self.y = y
         self.r = r
 
-    def is_collide_discrete(self, robot_x, robot_y, robot_r):
-        distance = math.sqrt((robot_x - self.x) ** 2 + (robot_y - self.y) ** 2)
-        if distance <= (robot_r + self.r):
+    def is_collide_discrete(self, circle_x, circle_y, circle_r):
+        distance = math.sqrt((circle_x - self.x) ** 2 + (circle_y - self.y) ** 2)
+        if distance <= (circle_r + self.r):
             return True
         else:
             return False
 
     def is_collide_continuous(self, from_node, to_node, radius):
-        robot_x_list, robot_y_list = linear_interpolate(from_node, to_node, radius)
-        for robot_x, robot_y in zip(robot_x_list, robot_y_list):
-            if self.is_collide_discrete(robot_x, robot_y, radius):
+        x, y = linear_interpolate(from_node, to_node, radius)
+        for i in range(len(x)):
+            distance = math.sqrt((x[i] - self.x) ** 2 + (y[i] - self.y) ** 2)
+            if distance <= (radius + self.r):
                 return True
         return False
 
@@ -71,46 +72,34 @@ class RectangleObstacle(ObstacleBase):
         self.width = width
         self.height = height
 
-    def is_collide_discrete(self, robot_x, robot_y, robot_r):
-        # 직사각형의 절반 너비와 높이 계산
-        half_width = self.width / 2
-        half_height = self.height / 2
-
-        # 직사각형의 모서리 좌표 계산
-        left = self.x - half_width
-        right = self.x + half_width
-        top = self.y + half_height
-        bottom = self.y - half_height
-
-        # 원의 중심이 직사각형 내부에 있는지 확인
-        if left < robot_x < right and bottom < robot_y < top:
+    def is_collide_discrete(self, circle_x, circle_y, circle_r):
+        if (circle_x + circle_r < self.x - self.width / 2) or \
+                (circle_x - circle_r > self.x + self.width / 2) or \
+                (circle_y + circle_r < self.y - self.height / 2) or \
+                (circle_y - circle_r > self.y + self.height / 2):
+            return False
+        else:
             return True
 
-        # 원의 중심에서 가장 가까운 직사각형의 점을 찾음
-        closest_x = max(left, min(robot_x, right))
-        closest_y = max(bottom, min(robot_y, top))
-
-        # 원의 중심과 가장 가까운 점 사이의 거리 계산
-        distance_x = robot_x - closest_x
-        distance_y = robot_y - closest_y
-        distance = (distance_x ** 2 + distance_y ** 2) ** 0.5
-
-        # 거리가 원의 반지름보다 작거나 같으면 충돌이 발생한 것으로 판단
-        return distance <= robot_r
-
     def is_collide_continuous(self, from_node, to_node, radius):
-        robot_x_list, robot_y_list = linear_interpolate(from_node, to_node, radius)
-        for robot_x, robot_y in zip(robot_x_list, robot_y_list):
-            if self.is_collide_discrete(robot_x, robot_y, radius):
+        x, y = linear_interpolate(from_node, to_node, radius)
+        for i in range(len(x)):
+            if (x[i] + radius < self.x - self.width / 2) or \
+                    (x[i] - radius > self.x + self.width / 2) or \
+                    (y[i] + radius < self.y - self.height / 2) or \
+                    (y[i] - radius > self.y + self.height / 2):
+                continue
+            else:
                 return True
-        return False
 
 
 class SpaceTimeRRT:
-    def __init__(self, start, goal, width, height, robot_radius, lambda_factor, expand_dis, obstacles):
+    def __init__(self, start, goal, width, height, robot_radius, lambda_factor, expand_dis, obstacles, rewire_radius, max_count=1000):
         # set start and goal
         self.start = Node(start[0], start[1])
+        self.start.space_time_cost = 0
         self.goal = Node(goal[0], goal[1])
+        self.goal.space_time_cost = float("inf")
 
         # set map size
         self.width = width
@@ -122,45 +111,54 @@ class SpaceTimeRRT:
         self.robot_radius = robot_radius
         self.lambda_factor = lambda_factor
         self.expand_dis = expand_dis
+        self.max_count = max_count
 
         # set nodes
         self.nodes = set()
         self.nodes.add(self.start)
         self.last_node = None
+        self.rewire_radius = rewire_radius
 
         # set figure
         self.animation = False
-        self.draw_result = False
+        self.draw_result = True
 
     def planning(self):
-        while True:
+        count = 0
+        while count < self.max_count:
+            count += 1
             rand_node = self.get_random_node()
             nearest_node = self.get_nearest_node(rand_node)
             new_node = self.steer(nearest_node, rand_node)
-            if self.is_collision_continuous(nearest_node, new_node, self.obstacles):
+            if self.is_collision_discrete(new_node, self.obstacles):
                 continue
 
-            print("node num: ", len(self.nodes))
-
+            # connect new node to tree
             new_node.parent = nearest_node
             nearest_node.children.append(new_node)
+            new_node.space_time_cost = nearest_node.space_time_cost + self.get_space_time_distance(nearest_node, new_node)
             self.nodes.add(new_node)
+
+            # rewire
+            self.rewire(new_node)
+
             if new_node.t + 1 > self.max_time:
                 self.max_time = new_node.t + 1
 
-            if self.animation and len(self.nodes) % 1 == 0:
+            if self.animation and count % 5 == 0:
                 self.draw_nodes_edge_3d_graph()
 
             if self.is_near_goal(new_node):
                 goal_node = self.steer(new_node, self.goal)
-                if self.is_collision_continuous(new_node, goal_node, self.obstacles):
+                if self.is_collision_discrete(goal_node, self.obstacles):
                     continue
+                goal_node.t = new_node.t + 1
                 goal_node.parent = new_node
                 new_node.children.append(goal_node)
-                goal_node.t = new_node.t + 1
+                goal_node.space_time_cost = new_node.space_time_cost + self.get_space_time_distance(new_node, goal_node)
                 self.nodes.add(goal_node)
-                self.last_node = goal_node
-                break
+                if self.last_node is None or goal_node.space_time_cost < self.last_node.space_time_cost:
+                    self.last_node = goal_node
 
         path = self.get_final_path()
         cost = self.get_cost(path)
@@ -221,6 +219,32 @@ class SpaceTimeRRT:
     def is_near_goal(self, node):
         d = self.get_space_distance(node, self.goal)
         return d <= self.expand_dis
+
+    def get_nodes_in_radius(self, center_node, radius):
+        nodes_in_radius = []
+        for node in self.nodes:
+            if self.get_space_time_distance(center_node, node) <= radius:
+                nodes_in_radius.append(node)
+        return nodes_in_radius
+
+    def rewire(self, new_node):
+        nearby_nodes = self.get_nodes_in_radius(new_node, self.rewire_radius)
+        for node in nearby_nodes:
+            if node == new_node.parent:
+                continue
+            if node.is_valid is False:
+                continue
+            if new_node.t - node.t != 1:
+                continue
+            potential_cost = node.space_time_cost + self.get_space_time_distance(node, new_node)
+            if potential_cost < new_node.space_time_cost:
+                if self.is_collision_discrete(new_node, self.obstacles):
+                    continue
+                if new_node.parent is not None:
+                    new_node.parent.children.remove(new_node)
+                new_node.parent = node
+                node.children.append(new_node)
+                new_node.space_time_cost = potential_cost
 
     def get_final_path(self):
         path = []
@@ -297,7 +321,7 @@ class SpaceTimeRRT:
                 cube_faces = self.create_cube(obstacle.x, obstacle.y, obstacle.width, obstacle.height, self.max_time)
                 face_collection = Poly3DCollection(cube_faces, facecolor='b', alpha=0.1, linewidths=1, edgecolors='k')
                 ax.add_collection3d(face_collection)
-        plt.pause(0.01)
+        plt.pause(0.1)
 
     def draw_path_3d_graph(self, path):
         ax.cla()
@@ -331,20 +355,22 @@ class SpaceTimeRRT:
                 face_collection = Poly3DCollection(cube_faces, facecolor='b', alpha=0.1, linewidths=1, edgecolors='k')
                 ax.add_collection3d(face_collection)
 
-        plt.pause(0.1)
+        plt.pause(1)
 
 
 if __name__ == '__main__':
-    start = (4, 10)
-    goal = (16, 10)
+    start = (2, 10)
+    goal = (18, 10)
     obstacles = [
-        RectangleObstacle(10, 4, 20, 8),
-        RectangleObstacle(4, 16, 8, 8),
-        RectangleObstacle(10, 18, 4, 4),
-        RectangleObstacle(16, 16, 8, 8),
+        CircleObstacle(10, 10, 5),
+        # RectangleObstacle(10, 10, 10, 10),
+        # RectangleObstacle(10, 4, 20, 8),
+        # RectangleObstacle(4, 16, 8, 8),
+        # RectangleObstacle(10, 18, 4, 4),
+        # RectangleObstacle(16, 16, 8, 8),
     ]
     space_time_rrt = SpaceTimeRRT(start=start, goal=goal, width=20.0, height=20.0, robot_radius=1.5,
-                                  lambda_factor=0.5, expand_dis=3.0, obstacles=obstacles)
+                                  lambda_factor=0.5, expand_dis=3.0, obstacles=obstacles, rewire_radius=5.0)
     cost, path = space_time_rrt.planning()
     for node in path:
         print(node.x, node.y, node.t)
