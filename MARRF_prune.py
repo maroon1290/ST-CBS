@@ -13,7 +13,7 @@ import yaml
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
-from STRRT_prune import SpaceTimeRRT, CircleObstacle, RectangleObstacle
+from STRRT_prune_star import SpaceTimeRRT, CircleObstacle, RectangleObstacle
 
 
 class Conflict:
@@ -30,12 +30,17 @@ class Conflict:
 
 class HighLevelNode:
     def __init__(self):
+        self.space_time_rrts = []
         self.disable_nodes = []
-        self.cost = 0
+        self.costs = []
         self.solutions = []
+        self.sum_of_costs = None
 
     def __lt__(self, other):
-        return self.cost < other.cost
+        return self.sum_of_costs < other.sum_of_costs
+
+    def set_sum_of_costs(self):
+        self.sum_of_costs = sum(self.costs)
 
 
 # Multi Agent Rapidly-exploring Random Forest
@@ -58,7 +63,6 @@ class MARRF:
 
         self.solutions = None
         self.cost = None
-        self.space_time_rrts = []
 
     def planning(self):
         priority_queue = []
@@ -66,15 +70,15 @@ class MARRF:
         init_node = HighLevelNode()
         for start, goal, robot_radius, expand_distance in zip(self.starts, self.goals, self.robot_radii, self.expand_distances):
             space_time_rrt = SpaceTimeRRT(start, goal, self.width, self.height, robot_radius, self.lambda_factor,
-                                          expand_distance, self.obstacles)
-            self.space_time_rrts.append(space_time_rrt)
-        init_node.cost, init_node.solutions = self.planning_all_space_time_rrts()
+                                          expand_distance, self.obstacles, 5.0)
+            init_node.space_time_rrts.append(space_time_rrt)
+        init_node.costs, init_node.solutions = self.planning_all_space_time_rrts(init_node.space_time_rrts)
+        init_node.set_sum_of_costs()
         heapq.heappush(priority_queue, init_node)
 
         cur_iter = 0
         while priority_queue:
-            if cur_iter % 10 == 0:
-                print("cur_iter: {}".format(cur_iter))
+            print("cur_iter: {}".format(cur_iter))
             high_level_node = heapq.heappop(priority_queue)
 
             # self.draw_paths_3d_graph(high_level_node.solutions)
@@ -85,15 +89,20 @@ class MARRF:
                 self.cost = high_level_node.cost
                 break
 
-            for robot, conflict_node in zip([conflict.robot1, conflict.robot2], [conflict.robot1_node, conflict.robot2_node]):
-                new_high_level_node = HighLevelNode()
+            robot1_conflict_index = high_level_node.space_time_rrts[conflict.robot1].node_list.index(conflict.robot1_node)
+            robot2_conflict_index = high_level_node.space_time_rrts[conflict.robot2].node_list.index(conflict.robot2_node)
 
-                for child in conflict_node.children:
-                    self.prune_by_post_order(self.space_time_rrts[robot], child)
+            for robot, conflict_index in [(conflict.robot1, robot1_conflict_index), (conflict.robot2, robot2_conflict_index)]:
+                new_high_level_node = deepcopy(high_level_node)
+                conflict_node = new_high_level_node.space_time_rrts[robot].node_list[conflict_index]
+                while conflict_node.children:
+                    child = conflict_node.children.popleft()
+                    self.prune_by_post_order(new_high_level_node.space_time_rrts[robot], child)
                 conflict_node.is_valid = False
-                cost, solutions = self.planning_all_space_time_rrts()
-                new_high_level_node.cost = cost
-                new_high_level_node.solutions = solutions
+                cost, solution = new_high_level_node.space_time_rrts[robot].planning()
+                new_high_level_node.costs[robot] = cost
+                new_high_level_node.solutions[robot] = solution
+                new_high_level_node.set_sum_of_costs()
                 heapq.heappush(priority_queue, new_high_level_node)
             cur_iter += 1
 
@@ -101,21 +110,20 @@ class MARRF:
         return self.cost, self.solutions
 
     def prune_by_post_order(self, tree, prune_node):
-        if prune_node is None:
-            return
-        for child in prune_node.children:
+        while prune_node.children:
+            child = prune_node.children.popleft()
             self.prune_by_post_order(tree, child)
-        tree.nodes.discard(prune_node)
+        tree.node_list.remove(prune_node)
         del prune_node
 
-    def planning_all_space_time_rrts(self):
+    def planning_all_space_time_rrts(self, space_time_rrts):
         solutions = []
-        sum_of_cost = 0
-        for space_time_rrt in self.space_time_rrts:
+        costs = []
+        for space_time_rrt in space_time_rrts:
             cost, solution = space_time_rrt.planning()
-            sum_of_cost += cost
+            costs.append(cost)
             solutions.append(solution)
-        return sum_of_cost, solutions
+        return costs, solutions
 
     def get_first_conflict(self, paths):
         conflict = Conflict()
@@ -125,16 +133,12 @@ class MARRF:
             for (robot1, path1), (robot2, path2) in list(combinations(enumerate(padded_paths), 2)):
                 if t == 0:
                     continue
-                if t >= len(path1):
-                    path1 = path1 + [path1[-1]] * (t - len(path1) + 1)
-                if t >= len(path2):
-                    path2 = path2 + [path2[-1]] * (t - len(path2) + 1)
                 if self.is_conflict_continuous(path1[t - 1], path1[t], path2[t - 1], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
-                    conflict.time = t
+                    conflict.time = t - 1
                     conflict.robot1 = robot1
                     conflict.robot2 = robot2
-                    conflict.robot1_node = path1[t]
-                    conflict.robot2_node = path2[t]
+                    conflict.robot1_node = path1[t - 1]
+                    conflict.robot2_node = path2[t - 1]
                     return conflict
                 # if self.is_conflict_discrete(path1[t], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
                 #     conflict.time = t
@@ -231,12 +235,12 @@ class MARRF:
                 cube_faces = self.create_cube(obstacle.x, obstacle.y, obstacle.width, obstacle.height, max_time)
                 face_collection = Poly3DCollection(cube_faces, facecolor='b', alpha=0.1, linewidths=1, edgecolors='k')
                 self.ax.add_collection3d(face_collection)
-        plt.pause(1)
+        plt.show()
 
 
 if __name__ == '__main__':
     # read config.yaml
-    with open("configs/deadlock_config.yaml", "r") as file:
+    with open("configs/free_config.yaml", "r") as file:
         config = yaml.safe_load(file)
 
     # make obstacles
