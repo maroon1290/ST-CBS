@@ -143,7 +143,7 @@ class SpaceTimeRRT:
                 if new_node.t + 1 > self.max_time:
                     self.max_time = new_node.t + 1
 
-                if self.animation:
+                if self.animation and i % 5 == 0:
                     self.draw_nodes_edge_3d_graph()
 
                 if self.is_near_goal(new_node):
@@ -154,7 +154,7 @@ class SpaceTimeRRT:
                     goal_node.parent = new_node
                     new_node.children.append(goal_node)
                     goal_node.space_time_cost = new_node.space_time_cost + self.get_space_time_distance(new_node, goal_node)
-                    self.nodes.add(goal_node)
+                    self.node_list.append(goal_node)
                     if self.last_node is None or goal_node.space_time_cost < self.last_node.space_time_cost:
                         self.last_node = goal_node
 
@@ -229,36 +229,33 @@ class SpaceTimeRRT:
         return nodes_in_radius
 
     def choose_parent(self, new_node, nearby_nodes):
-        for node in nearby_nodes:
-            if node == new_node.parent:
+        for nearby_node in nearby_nodes:
+            if nearby_node == new_node.parent:
                 continue
-            if node.is_valid is False:
+            if nearby_node.is_valid is False:
                 continue
-            if new_node.t - node.t != 1:
+            if new_node.t - nearby_node.t != 1:
                 continue
-            potential_cost = node.space_time_cost + self.get_space_time_distance(node, new_node)
+            potential_cost = nearby_node.space_time_cost + self.get_space_time_distance(new_node, nearby_node)
             if potential_cost < new_node.space_time_cost:
-                new_node.parent = node
+                new_node.parent = nearby_node
                 new_node.space_time_cost = potential_cost
+        new_node.parent.children.append(new_node)
 
-    def rewire(self, new_node):
-        nearby_nodes = self.get_nodes_in_radius(new_node, self.rewire_radius)
-        for node in nearby_nodes:
-            if node == new_node.parent:
+    def rewire(self, new_node, nearby_nodes):
+        for nearby_node in nearby_nodes:
+            if nearby_node == new_node.parent:
                 continue
-            if node.is_valid is False:
+            if nearby_node.is_valid is False:
                 continue
-            if new_node.t - node.t != 1:
+            if nearby_node.t - new_node.t != 1:
                 continue
-            potential_cost = node.space_time_cost + self.get_space_time_distance(node, new_node)
-            if potential_cost < new_node.space_time_cost:
-                if self.is_collision_discrete(new_node, self.obstacles):
-                    continue
-                if new_node.parent is not None:
-                    new_node.parent.children.remove(new_node)
-                new_node.parent = node
-                node.children.append(new_node)
-                new_node.space_time_cost = potential_cost
+            potential_cost = nearby_node.space_time_cost + self.get_space_time_distance(new_node, nearby_node)
+            if potential_cost < nearby_node.space_time_cost:
+                nearby_node.parent.children.remove(nearby_node)
+                nearby_node.parent = new_node
+                nearby_node.space_time_cost = potential_cost
+                new_node.children.append(nearby_node)
 
     def get_final_path(self):
         path = []
@@ -310,7 +307,7 @@ class SpaceTimeRRT:
         ax.set_ylabel('Y')
         ax.set_zlabel('T')
         ax.set_title('Space-Time RRT')
-        for node in self.nodes:
+        for node in self.node_list:
             if node.parent is not None:
                 x = [node.x, node.parent.x]
                 y = [node.y, node.parent.y]
@@ -376,7 +373,7 @@ if __name__ == '__main__':
     start = (2, 10)
     goal = (18, 10)
     obstacles = [
-        CircleObstacle(10, 10, 5),
+        # CircleObstacle(10, 10, 5),
     ]
     space_time_rrt = SpaceTimeRRT(start=start, goal=goal, width=20.0, height=20.0, robot_radius=1.5,
                                   lambda_factor=0.5, expand_dis=3.0, obstacles=obstacles, near_radius=5.0)
