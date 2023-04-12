@@ -119,7 +119,7 @@ class SpaceTimeRRT:
         self.near_radius = near_radius
 
         # set figure
-        self.animation = False
+        self.animation = True
         self.draw_result = True
 
     def planning(self):
