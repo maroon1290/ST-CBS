@@ -157,6 +157,7 @@ class SpaceTimeRRT:
                     self.node_list.append(goal_node)
                     if self.last_node is None or goal_node.space_time_cost < self.last_node.space_time_cost:
                         self.last_node = goal_node
+                        break
 
         path = self.get_final_path()
         cost = self.get_cost(path)
