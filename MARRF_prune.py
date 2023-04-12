@@ -62,7 +62,7 @@ class MARRF:
         self.ax = self.fig.add_subplot(111, projection='3d')
 
         self.solutions = None
-        self.cost = None
+        self.sum_of_costs = None
 
     def planning(self):
         priority_queue = []
@@ -70,7 +70,7 @@ class MARRF:
         init_node = HighLevelNode()
         for start, goal, robot_radius, expand_distance in zip(self.starts, self.goals, self.robot_radii, self.expand_distances):
             space_time_rrt = SpaceTimeRRT(start, goal, self.width, self.height, robot_radius, self.lambda_factor,
-                                          expand_distance, self.obstacles, 5.0)
+                                          expand_distance, self.obstacles, 3.0)
             init_node.space_time_rrts.append(space_time_rrt)
         init_node.costs, init_node.solutions = self.planning_all_space_time_rrts(init_node.space_time_rrts)
         init_node.set_sum_of_costs()
@@ -86,7 +86,7 @@ class MARRF:
             conflict = self.get_first_conflict(high_level_node.solutions)
             if not conflict:
                 self.solutions = high_level_node.solutions
-                self.cost = high_level_node.cost
+                self.sum_of_costs = high_level_node.sum_of_costs
                 break
 
             robot1_conflict_index = high_level_node.space_time_rrts[conflict.robot1].node_list.index(conflict.robot1_node)
@@ -107,7 +107,7 @@ class MARRF:
             cur_iter += 1
 
         self.draw_paths_3d_graph(self.solutions)
-        return self.cost, self.solutions
+        return self.sum_of_costs, self.solutions
 
     def prune_by_post_order(self, tree, prune_node):
         while prune_node.children:
@@ -152,7 +152,8 @@ class MARRF:
     @staticmethod
     def linear_interpolate(prev_node, next_node, radius):
         euclidean_distance = math.hypot(next_node.x - prev_node.x, next_node.y - prev_node.y)
-        step_size = round(euclidean_distance / radius)
+        step_size = math.ceil(euclidean_distance / radius)
+        step_size = 2 if step_size < 2 else step_size
         x = np.linspace(prev_node.x, next_node.x, step_size)
         y = np.linspace(prev_node.y, next_node.y, step_size)
         return x, y
@@ -173,12 +174,14 @@ class MARRF:
             if i < len(x1) and i < len(x2):
                 if math.hypot(x1[i] - x2[i], y1[i] - y2[i]) <= (robot_radius1 + robot_radius2):
                     return True
-            elif i < len(x1):
+            elif len(x1) > i >= len(x2):
                 if math.hypot(x1[i] - next_node2.x, y1[i] - next_node2.y) <= (robot_radius1 + robot_radius2):
                     return True
-            else:
+            elif len(x2) > i >= len(x1):
                 if math.hypot(x2[i] - next_node1.x, y2[i] - next_node1.y) <= (robot_radius1 + robot_radius2):
                     return True
+            else:
+                print("Error")
 
     @staticmethod
     def create_cube(center_x, center_y, width, height, depth):
@@ -240,7 +243,7 @@ class MARRF:
 
 if __name__ == '__main__':
     # read config.yaml
-    with open("configs/free_config.yaml", "r") as file:
+    with open("configs/free_simple_config.yaml", "r") as file:
         config = yaml.safe_load(file)
 
     # make obstacles
@@ -267,8 +270,8 @@ if __name__ == '__main__':
         config["robot_num"]
     )
 
-    cost, solutions = marrf.planning()
-    print("cost: ", cost)
+    sum_of_costs, solutions = marrf.planning()
+    print("Sum of costs: ", sum_of_costs)
     for solution in solutions:
         for node in solution:
             print(f"[{node.x}, {node.y}, {node.t}],")

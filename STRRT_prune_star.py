@@ -119,8 +119,8 @@ class SpaceTimeRRT:
         self.near_radius = near_radius
 
         # set figure
-        self.animation = True
-        self.draw_result = True
+        self.animation = False
+        self.draw_result = False
 
     def planning(self):
         for i in range(self.max_iter):
@@ -155,9 +155,8 @@ class SpaceTimeRRT:
                     new_node.children.append(goal_node)
                     goal_node.space_time_cost = new_node.space_time_cost + self.get_space_time_distance(new_node, goal_node)
                     self.node_list.append(goal_node)
-                    if self.last_node is None or goal_node.space_time_cost < self.last_node.space_time_cost:
-                        self.last_node = goal_node
-                        break
+                    self.last_node = goal_node
+                    break
 
         path = self.get_final_path()
         cost = self.get_cost(path)
@@ -200,7 +199,9 @@ class SpaceTimeRRT:
             np.random.uniform(1, self.max_time))
 
     def get_nearest_node(self, rand_node):
-        return self.node_list[int(np.argmin([math.hypot(rand_node.x - node.x, rand_node.y - node.y) if rand_node.t > node.t else float('inf') for node in self.node_list]))]
+        return self.node_list[int(np.argmin([math.hypot(rand_node.x - node.x, rand_node.y - node.y)
+                                             if (rand_node.t > node.t and node.is_valid) else float('inf')
+                                             for node in self.node_list]))]
 
     def steer(self, from_node, to_node):
         d = self.get_space_distance(from_node, to_node)
