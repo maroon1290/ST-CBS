@@ -243,7 +243,7 @@ class MARRF:
 
 if __name__ == '__main__':
     # read config.yaml
-    with open("configs/free_simple_config.yaml", "r") as file:
+    with open("configs/deadlock_config.yaml", "r") as file:
         config = yaml.safe_load(file)
 
     # make obstacles
