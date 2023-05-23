@@ -1,0 +1,18 @@
+robot_num: 2
+starts:
+  - [2, 10]
+  - [18, 10]
+goals:
+  - [18, 10]
+  - [2, 10]
+robot_radii:
+  - 2.0
+  - 2.0
+width: 20
+height: 20
+lambda_factor: 1
+collision_check_type: discrete
+expand_distances:
+  - 1.5
+  - 1.5
+obstacles: []

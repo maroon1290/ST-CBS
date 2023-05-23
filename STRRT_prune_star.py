@@ -10,9 +10,9 @@ import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
-fig = plt.figure()
+fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111, projection='3d')
-
+ax.view_init(elev=30., azim=120)
 
 class Node:
     def __init__(self, x, y, t=0, parent=None):
@@ -94,7 +94,7 @@ class RectangleObstacle(ObstacleBase):
 
 
 class SpaceTimeRRT:
-    def __init__(self, start, goal, width, height, robot_radius, lambda_factor, expand_dis, obstacles, near_radius, max_iter=1000):
+    def __init__(self, start, goal, width, height, robot_radius, lambda_factor, expand_dis, obstacles, near_radius, max_iter=500):
         # set start and goal
         self.start = Node(start[0], start[1])
         self.start.space_time_cost = 0
@@ -115,15 +115,21 @@ class SpaceTimeRRT:
 
         # set nodes
         self.node_list = [self.start]
-        self.last_node = None
         self.near_radius = near_radius
+        self.last_node = None
 
         # set figure
         self.animation = False
         self.draw_result = False
 
     def planning(self):
-        for i in range(self.max_iter):
+        self.last_node = Node(0, 0, 0, None)
+        self.last_node.space_time_cost = float("inf")
+        i = 0
+        while True:
+            i += 1
+            if i > self.max_iter and self.last_node.space_time_cost != float("inf"):
+                break
             rand_node = self.get_random_node()
             nearest_node = self.get_nearest_node(rand_node)
             new_node = self.steer(nearest_node, rand_node)
@@ -143,7 +149,7 @@ class SpaceTimeRRT:
                 if new_node.t + 1 > self.max_time:
                     self.max_time = new_node.t + 1
 
-                if self.animation and i % 5 == 0:
+                if self.animation and i % 10 == 0:
                     self.draw_nodes_edge_3d_graph()
 
                 if self.is_near_goal(new_node):
@@ -154,12 +160,12 @@ class SpaceTimeRRT:
                     goal_node.parent = new_node
                     new_node.children.append(goal_node)
                     goal_node.space_time_cost = new_node.space_time_cost + self.get_space_time_distance(new_node, goal_node)
-                    self.node_list.append(goal_node)
-                    self.last_node = goal_node
-                    break
+
+                    if self.last_node.space_time_cost > goal_node.space_time_cost:
+                        self.last_node = goal_node
 
         path = self.get_final_path()
-        cost = self.get_cost(path)
+        cost = self.get_space_time_cost(path)
         if self.draw_result:
             self.draw_path_3d_graph(path)
         return cost, path
@@ -268,10 +274,10 @@ class SpaceTimeRRT:
         path.reverse()
         return path
 
-    def get_cost(self, path):
+    def get_space_time_cost(self, path):
         cost = 0
         for i in range(len(path) - 1):
-            cost += self.get_space_distance(path[i], path[i + 1])
+            cost += self.get_space_time_distance(path[i], path[i + 1])
         return cost
 
     @staticmethod
@@ -308,7 +314,10 @@ class SpaceTimeRRT:
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('T')
-        ax.set_title('Space-Time RRT')
+        ax.set_yticklabels([])
+        ax.set_xticklabels([])
+        ax.set_zticklabels([])
+        ax.set_title('Low Level of MARRF')
         for node in self.node_list:
             if node.parent is not None:
                 x = [node.x, node.parent.x]
@@ -344,7 +353,10 @@ class SpaceTimeRRT:
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('T')
-        ax.set_title('Space-Time RRT')
+        ax.set_yticklabels([])
+        ax.set_xticklabels([])
+        ax.set_zticklabels([])
+        ax.set_title('Low Level of MARRF')
         for node in path:
             if node.parent is not None:
                 x = [node.x, node.parent.x]

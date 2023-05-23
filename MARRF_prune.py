@@ -58,7 +58,7 @@ class MARRF:
         self.expand_distances = expand_distances
         self.obstacles = obstacles
 
-        self.fig = plt.figure()
+        self.fig = plt.figure(figsize = (10, 10))
         self.ax = self.fig.add_subplot(111, projection='3d')
 
         self.solutions = None
@@ -84,7 +84,7 @@ class MARRF:
             # self.draw_paths_3d_graph(high_level_node.solutions)
 
             conflict = self.get_first_conflict(high_level_node.solutions)
-            if not conflict:
+            if conflict:
                 self.solutions = high_level_node.solutions
                 self.sum_of_costs = high_level_node.sum_of_costs
                 break
@@ -94,6 +94,7 @@ class MARRF:
 
             for robot, conflict_index in [(conflict.robot1, robot1_conflict_index), (conflict.robot2, robot2_conflict_index)]:
                 new_high_level_node = deepcopy(high_level_node)
+                new_high_level_node.space_time_rrts[robot].max_iter /= 2
                 conflict_node = new_high_level_node.space_time_rrts[robot].node_list[conflict_index]
                 while conflict_node.children:
                     child = conflict_node.children.popleft()
@@ -106,15 +107,18 @@ class MARRF:
                 heapq.heappush(priority_queue, new_high_level_node)
             cur_iter += 1
 
-        self.draw_paths_3d_graph(self.solutions)
+        # self.draw_paths_3d_graph(self.solutions)
         return self.sum_of_costs, self.solutions
 
     def prune_by_post_order(self, tree, prune_node):
+        if prune_node.is_valid is False:
+            return
         while prune_node.children:
             child = prune_node.children.popleft()
             self.prune_by_post_order(tree, child)
-        tree.node_list.remove(prune_node)
-        del prune_node
+        prune_node.is_valid = False
+        # tree.node_list.remove(prune_node)
+        # del prune_node
 
     def planning_all_space_time_rrts(self, space_time_rrts):
         solutions = []
@@ -218,7 +222,10 @@ class MARRF:
         self.ax.set_xlabel('X')
         self.ax.set_ylabel('Y')
         self.ax.set_zlabel('T')
-        self.ax.set_title('Multi Agent Rapidly Random Forest')
+        self.ax.set_yticklabels([])
+        self.ax.set_xticklabels([])
+        self.ax.set_zticklabels([])
+        self.ax.set_title('High Level of MARRF')
         for path in paths:
             x = [node.x for node in path]
             y = [node.y for node in path]
@@ -243,7 +250,7 @@ class MARRF:
 
 if __name__ == '__main__':
     # read config.yaml
-    with open("configs/deadlock_config.yaml", "r") as file:
+    with open("configs/picture_config.yaml", "r") as file:
         config = yaml.safe_load(file)
 
     # make obstacles
