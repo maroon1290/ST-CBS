@@ -5,7 +5,7 @@ import numpy as np
 import yaml
 
 # Your multi agent plan
-with open('solutions2.yaml') as f:
+with open('solutions.yaml') as f:
     plan = yaml.safe_load(f)
 
 # Number of agents

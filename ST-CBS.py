@@ -293,7 +293,7 @@ if __name__ == '__main__':
         print("--------------------------------")
 
     # save solutions to yaml
-    with open("solutions2.yaml", "w") as file:
+    with open("solutions.yaml", "w") as file:
         solutions_list = []
         for solution in solutions:
             solution_list = []

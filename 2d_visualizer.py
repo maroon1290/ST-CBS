@@ -21,7 +21,7 @@ def interpolate(p1, p2, t1, t2, t):
 
 if __name__ == '__main__':
     # read paths from yaml
-    with open('solutions2.yaml', 'r') as f:
+    with open('solutions.yaml', 'r') as f:
         paths = yaml.load(f, Loader=yaml.FullLoader)
 
     with open('configs/picture_config.yaml', 'r') as f:
@@ -143,6 +143,6 @@ if __name__ == '__main__':
 
     # 애니메이션 설정
     max_time = max(max(t) for t in t_list)
-    ani = FuncAnimation(fig, update, frames=np.arange(0, max_time + 0.01, 0.01), blit=True, interval=10, repeat=False)
+    ani = FuncAnimation(fig, update, frames=np.arange(0, max_time + 0.01, 1), blit=True, interval=500, repeat=False)
 
     plt.show()
