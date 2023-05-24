@@ -28,7 +28,7 @@ robot_radii:
   - 0.5
 width: 30
 height: 30
-lambda_factor: 0.5
+lambda_factor: 0
 neighbor_radius: 3.0
 max_iter: 500
 expand_distances:

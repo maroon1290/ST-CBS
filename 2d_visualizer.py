@@ -20,7 +20,7 @@ def interpolate(p1, p2, t1, t2, t):
 
 
 if __name__ == '__main__':
-    basename = "OpenEnvironment_10_0"
+    basename = "OpenEnvironment_20_0"
     # read paths from yaml
     with open(f'solutions/{basename}_solutions.yaml', 'r') as f:
         paths = yaml.load(f, Loader=yaml.FullLoader)
@@ -54,7 +54,7 @@ if __name__ == '__main__':
             raise ValueError('invalid obstacle type')
 
     # 시각화를 위한 설정
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(15, 15))
     ax.set_xlim(0, config["width"])
     ax.set_ylim(0, config["height"])
 
@@ -117,6 +117,12 @@ if __name__ == '__main__':
     # 시간 텍스트 객체 생성
     time_text = ax.text(0.05, 0.95, '', transform=ax.transAxes, fontsize=12)
 
+    # 로봇 번호 텍스트
+    robot_num = len(x_list)
+    robot_text = []
+    for i in range(robot_num):
+        robot_text.append(ax.text(0.05, 0.9 - i * 0.05, f'Robot {i + 1}', transform=ax.transAxes, fontsize=12, color=color_list[i]))
+
     def check_collision(robot_pos, obstacles, robot_radius):
         for obs_x, obs_y, obs_r in obstacles:
             distance = euclidean_distance(robot_pos, (obs_x, obs_y))
@@ -132,7 +138,7 @@ if __name__ == '__main__':
             end_point.set_xy((x_list[i][-1] - 0.2, y_list[i][-1] - 0.2))
 
         # 각 로봇의 위치 갱신
-        for i, (robot, path_line, x, y, t) in enumerate(zip(robots, path_lines, x_list, y_list, t_list)):
+        for i, (robot, path_line, x, y, t, text) in enumerate(zip(robots, path_lines, x_list, y_list, t_list, robot_text)):
             current_position = np.searchsorted(t, current_time, side='right') - 1
             if current_position >= 0:
                 if current_position < len(t) - 1:
@@ -142,6 +148,9 @@ if __name__ == '__main__':
                                         t[current_position + 1], current_time)
                 else:
                     x_pos, y_pos = x[-1], y[-1]
+
+                # 로봇 번호 텍스트 위치 변경
+                text.set_position((x_pos + 0.2, y_pos - 0.2))
 
                 robot.set_center((x_pos, y_pos))
                 path_line.set_data(x[:current_position + 1] + (x_pos,), y[:current_position + 1] + (y_pos,))
@@ -155,16 +164,17 @@ if __name__ == '__main__':
             x1, y1 = robots[i].center
             x2, y2 = robots[j].center
             distance = euclidean_distance((x1, y1), (x2, y2))
-            if distance <= config['robot_radii'][i] + config['robot_radii'][j]:
+            if distance < config['robot_radii'][i] + config['robot_radii'][j] - 0.1:
                 print(f"Robot {i} collided with robot {j}!")
 
         # 시간 텍스트 갱신
         time_text.set_text(f'Time: {current_time:.2f}')
 
-        return robots + path_lines + [time_text]
+        all_text = [time_text] + robot_text
+        return robots + path_lines + all_text
 
     # 애니메이션 설정
     max_time = max(max(t) for t in t_list)
-    ani = FuncAnimation(fig, update, frames=np.arange(0, max_time + 0.01, 0.003), blit=True, interval=1, repeat=False)
+    ani = FuncAnimation(fig, update, frames=np.arange(0, max_time + 0.01, 0.005), blit=True, interval=1, repeat=False)
 
     plt.show()

@@ -159,10 +159,11 @@ class USTRRRTstar:
                         self.last_node = goal_node
 
         path = self.get_final_path()
-        cost = self.get_space_time_cost(path)
+        space_cost = self.get_space_cost(path)
+        space_time_cost = self.get_space_time_cost(path)
         if self.draw_result:
             self.draw_path_3d_graph(path)
-        return cost, path
+        return space_cost, space_time_cost, path
 
     def is_collide(self, from_node, to_node, obstacles):
         for obstacle in obstacles:
@@ -251,10 +252,17 @@ class USTRRRTstar:
         return path
 
     def get_space_time_cost(self, path):
-        cost = 0
+        space_time_cost = 0
         for i in range(len(path) - 1):
-            cost += self.get_space_time_distance(path[i], path[i + 1])
-        return cost
+            space_time_cost += self.get_space_time_distance(path[i], path[i + 1])
+        return space_time_cost
+
+    @staticmethod
+    def get_space_cost(path):
+        space_cost = 0
+        for i in range(len(path) - 1):
+            space_cost += path[i].space_distance(path[i + 1])
+        return space_cost
 
     @staticmethod
     def create_cube(center_x, center_y, width, height, depth):
@@ -367,7 +375,7 @@ if __name__ == '__main__':
     ]
     space_time_rrt = USTRRRTstar(start=start, goal=goal, width=20.0, height=20.0, robot_radius=1.5,
                                   lambda_factor=0.5, expand_dis=3.0, obstacles=obstacles, near_radius=5.0, max_iter=500)
-    cost, path = space_time_rrt.planning()
+    space_cost, space_time_cost, path = space_time_rrt.planning()
     for node in path:
         print(node.x, node.y, node.t)
-    print('cost:', cost)
+    print(space_cost, space_time_cost)
