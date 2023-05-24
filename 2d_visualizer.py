@@ -20,7 +20,7 @@ def interpolate(p1, p2, t1, t2, t):
 
 
 if __name__ == '__main__':
-    basename = "OpenEnvironment_20_0"
+    basename = "OpenEnvironment_15_1"
     # read paths from yaml
     with open(f'solutions/{basename}_solutions.yaml', 'r') as f:
         paths = yaml.load(f, Loader=yaml.FullLoader)

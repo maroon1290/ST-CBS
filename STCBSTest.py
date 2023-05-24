@@ -2,6 +2,7 @@ from STCBS import *
 import yaml
 import os
 import time
+import multiprocessing
 
 
 if __name__ == '__main__':
@@ -10,7 +11,7 @@ if __name__ == '__main__':
     sum_of_costs_list = []
     compute_time_list = []
     for i in range(count):
-        config_name = f"OpenEnvironment_5_{i}"
+        config_name = f"OpenEnvironment_20_{i}"
         # read config.yaml
         with open(os.path.join("configs", config_name + ".yaml"), "r") as file:
             config = yaml.safe_load(file)
@@ -41,30 +42,47 @@ if __name__ == '__main__':
             config["max_iter"]
         )
 
+        makespan = None
+        sum_of_costs = None
+        solutions = None
         start_time = time.time()
-        makespan, sum_of_costs, solutions = st_cbs.planning()
+        pool = multiprocessing.Pool(processes=1)
+        result = pool.apply_async(st_cbs.planning)
+        try:
+            makespan, sum_of_costs, solutions = result.get(timeout=300)
+        except multiprocessing.TimeoutError:
+            print(f"{config_name} didn't finish within 5 minutes. Terminating...")
+            pool.terminate()
+        else:
+            pool.close()
+        pool.join()
         end_time = time.time()
-        print(f"Time: {end_time - start_time}")
-        print("Makespan: ", makespan)
-        print("Sum of costs: ", sum_of_costs)
-        for solution in solutions:
-            for node in solution:
-                print(f"[{node.x}, {node.y}, {node.t}],")
-            print("--------------------------------")
-
-        # save solutions to yaml
-        with open(f"solutions/{config_name}_solutions.yaml", "w") as file:
-            solutions_list = []
+        if solutions:
+            print(f"Time: {end_time - start_time}")
+            print("Makespan: ", makespan)
+            print("Sum of costs: ", sum_of_costs)
             for solution in solutions:
-                solution_list = []
                 for node in solution:
-                    solution_list.append([node.x, node.y, node.t])
-                solutions_list.append(solution_list)
-            yaml.dump(solutions_list, file)
+                    print(f"[{node.x}, {node.y}, {node.t}],")
+                print("--------------------------------")
 
-        makespan_list.append(makespan)
-        sum_of_costs_list.append(sum_of_costs)
-        compute_time_list.append(end_time - start_time)
+            # save solutions to yaml
+            with open(f"solutions/{config_name}_solutions.yaml", "w") as file:
+                solutions_list = []
+                for solution in solutions:
+                    solution_list = []
+                    for node in solution:
+                        solution_list.append([node.x, node.y, node.t])
+                    solutions_list.append(solution_list)
+                yaml.dump(solutions_list, file)
+
+            makespan_list.append(makespan)
+            sum_of_costs_list.append(sum_of_costs)
+            compute_time_list.append(end_time - start_time)
+        else:
+            makespan_list.append(None)
+            sum_of_costs_list.append(None)
+            compute_time_list.append(None)
 
     # save makespan and sum of costs to yaml
     with open(f"solutions/{config_name}_raw_data.csv", "w") as file:

@@ -6,7 +6,7 @@ import random
 if __name__ == '__main__':
     count = 10
     for i in range(count):
-        basename = "OpenEnvironment_5"
+        basename = "OpenEnvironment_20"
         with open(f'configs/{basename}.yaml', 'r') as f:
             config = yaml.load(f, Loader=yaml.FullLoader)
 

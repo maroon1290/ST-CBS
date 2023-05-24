@@ -6,12 +6,12 @@ import os
 from copy import deepcopy
 from itertools import combinations
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
 import yaml
 
-from mpl_toolkits.mplot3d import Axes3D
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+# from mpl_toolkits.mplot3d import Axes3D
+# from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 from USTRRTstar import USTRRRTstar, CircleObstacle, RectangleObstacle
 
@@ -63,8 +63,8 @@ class STCBS:
         self.neighbor_radius = neighbor_radius
         self.max_iter = max_iter
 
-        self.fig = plt.figure(figsize=(10, 10))
-        self.ax = self.fig.add_subplot(111, projection='3d')
+        # self.fig = plt.figure(figsize=(10, 10))
+        # self.ax = self.fig.add_subplot(111, projection='3d')
         self.animation = False
         self.draw_result = False
 
