@@ -20,7 +20,7 @@ def interpolate(p1, p2, t1, t2, t):
 
 
 if __name__ == '__main__':
-    basename = "OpenEnvironment_5_0"
+    basename = "OpenEnvironment_10_0"
     # read paths from yaml
     with open(f'solutions/{basename}_solutions.yaml', 'r') as f:
         paths = yaml.load(f, Loader=yaml.FullLoader)
@@ -69,7 +69,28 @@ if __name__ == '__main__':
 
     # 로봇 시각화 객체 생성
     robots = []
-    color_list = ['red', 'green', 'blue', 'yellow', 'purple', 'orange', 'pink', 'brown', 'gray', 'olive']
+    color_list = [
+        'b',  # blue
+        'g',  # green
+        'r',  # red
+        'c',  # cyan
+        'm',  # magenta
+        'y',  # yellow
+        'k',  # black
+        '#FF6347',  # tomato
+        '#8B0000',  # darkred
+        '#FFD700',  # gold
+        '#ADFF2F',  # greenyellow
+        '#483D8B',  # darkslateblue
+        '#FF4500',  # orangered
+        '#7CFC00',  # lawngreen
+        '#D8BFD8',  # thistle
+        '#D2B48C',  # tan
+        '#FA8072',  # salmon
+        '#F0E68C',  # khaki
+        '#90EE90',  # lightgreen
+        '#87CEEB'   # skyblue
+    ]
     for i, (x, y) in enumerate(zip(x_list, y_list)):
         robot = Circle((x[0], y[0]), config['robot_radii'][i], fc=color_list[i], alpha=0.5)
         ax.add_patch(robot)
@@ -144,6 +165,6 @@ if __name__ == '__main__':
 
     # 애니메이션 설정
     max_time = max(max(t) for t in t_list)
-    ani = FuncAnimation(fig, update, frames=np.arange(0, max_time + 0.01, 1), blit=True, interval=500, repeat=False)
+    ani = FuncAnimation(fig, update, frames=np.arange(0, max_time + 0.01, 0.003), blit=True, interval=1, repeat=False)
 
     plt.show()

@@ -47,10 +47,6 @@ def linear_interpolate(from_node, to_node, radius):
 
 class ObstacleBase(metaclass=ABCMeta):
     @abstractmethod
-    def is_collide_discrete(self, circle_x, circle_y, circle_r):
-        pass
-
-    @abstractmethod
     def is_collide_continuous(self, from_node, to_node, radius):
         pass
 
@@ -61,14 +57,7 @@ class CircleObstacle(ObstacleBase):
         self.y = y
         self.r = r
 
-    def is_collide_discrete(self, circle_x, circle_y, circle_r):
-        distance = math.sqrt((circle_x - self.x) ** 2 + (circle_y - self.y) ** 2)
-        if distance <= (circle_r + self.r):
-            return True
-        else:
-            return False
-
-    def is_collide_continuous(self, from_node, to_node, radius):
+    def is_collide(self, from_node, to_node, radius):
         x, y = linear_interpolate(from_node, to_node, radius)
         for i in range(len(x)):
             distance = math.sqrt((x[i] - self.x) ** 2 + (y[i] - self.y) ** 2)
@@ -84,16 +73,7 @@ class RectangleObstacle(ObstacleBase):
         self.width = width
         self.height = height
 
-    def is_collide_discrete(self, circle_x, circle_y, circle_r):
-        if (circle_x + circle_r < self.x - self.width / 2) or \
-                (circle_x - circle_r > self.x + self.width / 2) or \
-                (circle_y + circle_r < self.y - self.height / 2) or \
-                (circle_y - circle_r > self.y + self.height / 2):
-            return False
-        else:
-            return True
-
-    def is_collide_continuous(self, from_node, to_node, radius):
+    def is_collide(self, from_node, to_node, radius):
         x, y = linear_interpolate(from_node, to_node, radius)
         for i in range(len(x)):
             if (x[i] + radius < self.x - self.width / 2) or \
@@ -148,7 +128,7 @@ class USTRRRTstar:
             new_node = self.steer(nearest_node, rand_node)
 
             # check collision
-            if not self.is_collision_discrete(new_node, self.obstacles):
+            if not self.is_collide(nearest_node, new_node, self.obstacles):
                 # connect new node to tree
                 self.node_list.add(new_node)
 
@@ -167,7 +147,7 @@ class USTRRRTstar:
 
                 if self.is_near_goal(new_node):
                     goal_node = self.steer(new_node, self.goal)
-                    if self.is_collision_discrete(goal_node, self.obstacles):
+                    if self.is_collide(new_node, goal_node, self.obstacles):
                         continue
                     goal_node.t = new_node.t + 1
                     goal_node.parent = new_node
@@ -175,6 +155,7 @@ class USTRRRTstar:
                     goal_node.space_time_cost = new_node.space_time_cost + self.get_space_time_distance(new_node, goal_node)
 
                     if self.last_node.space_time_cost > goal_node.space_time_cost:
+                        self.node_list.add(goal_node)
                         self.last_node = goal_node
 
         path = self.get_final_path()
@@ -183,15 +164,9 @@ class USTRRRTstar:
             self.draw_path_3d_graph(path)
         return cost, path
 
-    def is_collision_discrete(self, node, obstacles):
+    def is_collide(self, from_node, to_node, obstacles):
         for obstacle in obstacles:
-            if obstacle.is_collide_discrete(node.x, node.y, self.robot_radius):
-                return True
-        return False
-
-    def is_collision_continuous(self, from_node, to_node, obstacles):
-        for obstacle in obstacles:
-            if obstacle.is_collide_continuous(from_node, to_node, self.robot_radius):
+            if obstacle.is_collide(from_node, to_node, self.robot_radius):
                 return True
         return False
 
@@ -246,7 +221,7 @@ class USTRRRTstar:
             if new_node.t - nearby_node.t != 1:
                 continue
             potential_cost = nearby_node.space_time_cost + self.get_space_time_distance(new_node, nearby_node)
-            if potential_cost < new_node.space_time_cost:
+            if potential_cost < new_node.space_time_cost and self.is_collide(new_node, nearby_node, self.obstacles):
                 new_node.parent = nearby_node
                 new_node.space_time_cost = potential_cost
         new_node.parent.children.append(new_node)
@@ -260,7 +235,7 @@ class USTRRRTstar:
             if nearby_node.t - new_node.t != 1:
                 continue
             potential_cost = nearby_node.space_time_cost + self.get_space_time_distance(new_node, nearby_node)
-            if potential_cost < nearby_node.space_time_cost:
+            if potential_cost < nearby_node.space_time_cost and self.is_collide(new_node, nearby_node, self.obstacles):
                 nearby_node.parent.children.remove(nearby_node)
                 nearby_node.parent = new_node
                 nearby_node.space_time_cost = potential_cost
@@ -391,7 +366,7 @@ if __name__ == '__main__':
         # CircleObstacle(10, 10, 5),
     ]
     space_time_rrt = USTRRRTstar(start=start, goal=goal, width=20.0, height=20.0, robot_radius=1.5,
-                                  lambda_factor=0.5, expand_dis=3.0, obstacles=obstacles, near_radius=5.0)
+                                  lambda_factor=0.5, expand_dis=3.0, obstacles=obstacles, near_radius=5.0, max_iter=500)
     cost, path = space_time_rrt.planning()
     for node in path:
         print(node.x, node.y, node.t)

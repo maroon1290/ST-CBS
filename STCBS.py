@@ -94,16 +94,6 @@ class STCBS:
                 self.makespan = max(high_level_node.costs)
                 break
 
-            print(conflict)
-            print(conflict.robot1)
-            print(conflict.robot2)
-            print(conflict.robot1_key)
-            print(conflict.robot2_key)
-            for robot, key in [(conflict.robot1, conflict.robot1_key), (conflict.robot2, conflict.robot2_key)]:
-                for node in high_level_node.trees[robot].node_list:
-                    if node.key == key:
-                        print(robot, node.key)
-
             for robot, key in [(conflict.robot1, conflict.robot1_key), (conflict.robot2, conflict.robot2_key)]:
                 new_high_level_node = deepcopy(high_level_node)
                 conflict_node = list(filter(lambda node: node.key == key,
@@ -152,14 +142,6 @@ class STCBS:
 
     def get_first_conflict(self, high_level_node):
         paths = high_level_node.solutions
-        for i, path in enumerate(paths):
-            count = 0
-            for path_node in path:
-                for ddd in high_level_node.trees[i].node_list:
-                    if ddd.key == path_node.key:
-                        count += 1
-                print(len(path), count)
-
         conflict = Conflict()
         max_t = max([len(path) for path in paths])
         padded_paths = [path + [path[-1]] * (max_t - len(path)) for path in paths]
@@ -168,14 +150,8 @@ class STCBS:
             for (robot1, path1), (robot2, path2) in list(combinations(enumerate(padded_paths), 2)):
                 if t == 0:
                     continue
-                # if self.is_conflict_continuous(path1[t - 1], path1[t], path2[t - 1], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
-                #     conflict.time = t - 1
-                #     conflict.robot1 = robot1
-                #     conflict.robot2 = robot2
-                #     conflict.robot1_node = path1[t - 1]
-                #     conflict.robot2_node = path2[t - 1]
-                #     return conflict
-                if self.is_conflict_discrete(path1[t], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
+                if self.is_conflict_continuous(path1[t - 1], path1[t], path2[t - 1], path2[t], self.robot_radii[robot1],
+                                               self.robot_radii[robot2]):
                     conflict.time = t
                     conflict.robot1 = robot1
                     conflict.robot2 = robot2
@@ -193,30 +169,19 @@ class STCBS:
         y = np.linspace(prev_node.y, next_node.y, step_size)
         return x, y
 
-    @staticmethod
-    def is_conflict_discrete(node1, node2, robot_radius1, robot_radius2):
-        distance = math.sqrt((node1.x - node2.x) ** 2 + (node1.y - node2.y) ** 2)
-        if distance <= (robot_radius1 + robot_radius2):
-            return True
-        else:
-            return False
-
     def is_conflict_continuous(self, prev_node1, next_node1, prev_node2, next_node2, robot_radius1, robot_radius2):
         x1, y1 = self.linear_interpolate(prev_node1, next_node1, robot_radius1)
         x2, y2 = self.linear_interpolate(prev_node2, next_node2, robot_radius2)
         max_step = max(len(x1), len(x2))
+        # fill the shorter path
+        x1 = np.append(x1, [x1[-1]] * (max_step - len(x1)))
+        y1 = np.append(y1, [y1[-1]] * (max_step - len(y1)))
+        x2 = np.append(x2, [x2[-1]] * (max_step - len(x2)))
+        y2 = np.append(y2, [y2[-1]] * (max_step - len(y2)))
         for i in range(max_step):
-            if i < len(x1) and i < len(x2):
-                if math.hypot(x1[i] - x2[i], y1[i] - y2[i]) <= (robot_radius1 + robot_radius2):
-                    return True
-            elif len(x1) > i >= len(x2):
-                if math.hypot(x1[i] - next_node2.x, y1[i] - next_node2.y) <= (robot_radius1 + robot_radius2):
-                    return True
-            elif len(x2) > i >= len(x1):
-                if math.hypot(x2[i] - next_node1.x, y2[i] - next_node1.y) <= (robot_radius1 + robot_radius2):
-                    return True
-            else:
-                print("Error")
+            if math.hypot(x1[i] - x2[i], y1[i] - y2[i]) <= (robot_radius1 + robot_radius2):
+                return True
+        return False
 
     @staticmethod
     def create_cube(center_x, center_y, width, height, depth):
