@@ -96,7 +96,7 @@ class STCBS:
                 high_level_node.set_sum_of_space_costs()
                 self.solutions = high_level_node.solutions
                 self.sum_of_space_costs = high_level_node.sum_of_space_costs
-                self.makespan = max(high_level_node.space_time_costs)
+                self.makespan = max(high_level_node.space_costs)
                 break
 
             for robot, key in [(conflict.robot1, conflict.robot1_key), (conflict.robot2, conflict.robot2_key)]:
@@ -253,7 +253,7 @@ class STCBS:
 
 
 if __name__ == '__main__':
-    config_name = "OpenEnvironment_5_0"
+    config_name = "OpenEnvironment_2"
     # read config.yaml
     with open(os.path.join("configs", config_name + ".yaml"), "r") as file:
         config = yaml.safe_load(file)
