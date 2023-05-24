@@ -11,7 +11,7 @@ if __name__ == '__main__':
     sum_of_costs_list = []
     compute_time_list = []
     for i in range(count):
-        config_name = f"OpenEnvironment_20_{i}"
+        config_name = f"OpenEnvironment_15_{i}"
         # read config.yaml
         with open(os.path.join("configs", config_name + ".yaml"), "r") as file:
             config = yaml.safe_load(file)
