@@ -21,7 +21,7 @@ def interpolate(p1, p2, t1, t2, t):
 
 if __name__ == '__main__':
     # read paths from yaml
-    with open('solutions.yaml', 'r') as f:
+    with open('solutions2.yaml', 'r') as f:
         paths = yaml.load(f, Loader=yaml.FullLoader)
 
     with open('configs/picture_config.yaml', 'r') as f:

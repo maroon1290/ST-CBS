@@ -13,7 +13,7 @@ import yaml
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
-from STRRT import SpaceTimeRRT, CircleObstacle, RectangleObstacle
+from USTRRTstar import USTRRRTstar, CircleObstacle, RectangleObstacle
 
 
 class Conflict:
@@ -21,8 +21,8 @@ class Conflict:
         self.time = None
         self.robot1 = None
         self.robot2 = None
-        self.robot1_node = None
-        self.robot2_node = None
+        self.robot1_key = None
+        self.robot2_key = None
 
     def __str__(self):
         return "time: {}, robot1: {}, robot2: {}".format(self.time, self.robot1, self.robot2)
@@ -30,18 +30,21 @@ class Conflict:
 
 class HighLevelNode:
     def __init__(self):
-        self.disable_nodes = []
-        self.cost = 0
+        self.trees = []
+        self.costs = []
         self.solutions = []
+        self.sum_of_costs = None
 
     def __lt__(self, other):
-        return self.cost < other.cost
+        return self.sum_of_costs < other.sum_of_costs
+
+    def set_sum_of_costs(self):
+        self.sum_of_costs = sum(self.costs)
 
 
 # Multi Agent Rapidly-exploring Random Forest
-class MARRF:
-    def __init__(self, starts, goals, width, height, robot_radii, lambda_factor, expand_distances, obstacles,
-                 robot_num):
+class STCBS:
+    def __init__(self, starts, goals, width, height, robot_radii, lambda_factor, expand_distances, obstacles, robot_num):
         # set parameters
         self.starts = starts
         self.goals = goals
@@ -53,79 +56,86 @@ class MARRF:
         self.expand_distances = expand_distances
         self.obstacles = obstacles
 
-        self.fig = plt.figure()
+        self.fig = plt.figure(figsize=(10, 10))
         self.ax = self.fig.add_subplot(111, projection='3d')
+        self.animation = False
+        self.draw_result = False
 
         self.solutions = None
-        self.cost = None
-        self.space_time_rrts = []
+        self.sum_of_costs = None
 
     def planning(self):
         priority_queue = []
 
         init_node = HighLevelNode()
         for start, goal, robot_radius, expand_distance in zip(self.starts, self.goals, self.robot_radii, self.expand_distances):
-            space_time_rrt = SpaceTimeRRT(start, goal, self.width, self.height, robot_radius, self.lambda_factor,
-                                          expand_distance, self.obstacles)
-            self.space_time_rrts.append(space_time_rrt)
-        init_node.cost, init_node.solutions = self.planning_all_space_time_rrts()
+            space_time_rrt = USTRRRTstar(start, goal, self.width, self.height, robot_radius, self.lambda_factor, expand_distance, self.obstacles, 3.0)
+            init_node.trees.append(space_time_rrt)
+        init_node.costs, init_node.solutions = self.planning_all_space_time_rrts(init_node.trees)
+        init_node.set_sum_of_costs()
         heapq.heappush(priority_queue, init_node)
 
         cur_iter = 0
         while priority_queue:
-            if cur_iter % 10 == 0:
-                print("cur_iter: {}".format(cur_iter))
+            print("cur_iter: {}".format(cur_iter))
             high_level_node = heapq.heappop(priority_queue)
+
+            if self.animation:
+                self.draw_paths_3d_graph(high_level_node.solutions)
+
             conflict = self.get_first_conflict(high_level_node.solutions)
             if not conflict:
                 self.solutions = high_level_node.solutions
-                self.cost = high_level_node.cost
+                self.sum_of_costs = high_level_node.sum_of_costs
                 break
 
-            conflict_node_idx1 = self.space_time_rrts[conflict.robot1].nodes.index(conflict.robot1_node)
-            conflict_node_idx2 = self.space_time_rrts[conflict.robot2].nodes.index(conflict.robot2_node)
-
-            for conflict_node_idx, robot in zip([conflict_node_idx1, conflict_node_idx2],
-                                                [conflict.robot1, conflict.robot2]):
-                new_high_level_node = HighLevelNode()
-                new_high_level_node.disable_nodes = high_level_node.disable_nodes[:]
-                new_high_level_node.disable_nodes.append(self.space_time_rrts[robot].nodes[conflict_node_idx])
-
-                for disable_node in new_high_level_node.disable_nodes:
-                    self.set_invalid_by_post_order(disable_node)
-                cost, solutions = self.planning_all_space_time_rrts()
-                for disable_node in new_high_level_node.disable_nodes:
-                    self.set_valid_by_post_order(disable_node)
-                new_high_level_node.cost = cost
-                new_high_level_node.solutions = solutions
+            for robot, key in [(conflict.robot1, conflict.robot1_key), (conflict.robot2, conflict.robot2_key)]:
+                new_high_level_node = deepcopy(high_level_node)
+                conflict_node = list(filter(lambda node: node.key == key,
+                                            new_high_level_node.trees[robot].node_list))[0]
+                new_high_level_node.trees[robot].max_iter /= 2
+                while conflict_node.children:
+                    child = conflict_node.children.popleft()
+                    self.prune_children(child, new_high_level_node.trees[robot].node_list)
+                conflict_node.is_valid = False
+                if conflict_node in new_high_level_node.trees[robot].node_list:
+                    print(conflict_node.is_valid)
+                cost, solution = new_high_level_node.trees[robot].planning()
+                new_high_level_node.costs[robot] = cost
+                new_high_level_node.solutions[robot] = solution
+                new_high_level_node.set_sum_of_costs()
                 heapq.heappush(priority_queue, new_high_level_node)
             cur_iter += 1
 
-        self.draw_paths_3d_graph(self.solutions)
-        return self.cost, self.solutions
+        if self.draw_result:
+            self.draw_paths_3d_graph(self.solutions)
+        return self.sum_of_costs, self.solutions
 
-    def set_invalid_by_post_order(self, disable_node):
-        if disable_node is None or not disable_node.is_valid:
-            return
-        disable_node.is_valid = False
-        for child in disable_node.children:
-            self.set_invalid_by_post_order(child)
+    def prune_children(self, node, node_list: set):
+        while node.children:
+            child = node.children.popleft()
+            self.prune_children(child, node_list)
 
-    def set_valid_by_post_order(self, enable_node):
-        if enable_node is None or enable_node.is_valid:
-            return
-        enable_node.is_valid = True
-        for child in enable_node.children:
-            self.set_valid_by_post_order(child)
+        if node in node_list:
+            node_list.remove(node)
 
-    def planning_all_space_time_rrts(self):
+        # if prune_node.is_valid is False:
+        #     return
+        # while prune_node.children:
+        #     child = prune_node.children.popleft()
+        #     self.prune_children(tree, child)
+        # prune_node.is_valid = False
+        # tree.node_list.remove(prune_node)
+        # del prune_node
+
+    def planning_all_space_time_rrts(self, space_time_rrts):
         solutions = []
-        sum_of_cost = 0
-        for space_time_rrt in self.space_time_rrts:
+        costs = []
+        for space_time_rrt in space_time_rrts:
             cost, solution = space_time_rrt.planning()
-            sum_of_cost += cost
+            costs.append(cost)
             solutions.append(solution)
-        return sum_of_cost, solutions
+        return costs, solutions
 
     def get_first_conflict(self, paths):
         conflict = Conflict()
@@ -135,30 +145,27 @@ class MARRF:
             for (robot1, path1), (robot2, path2) in list(combinations(enumerate(padded_paths), 2)):
                 if t == 0:
                     continue
-                if t >= len(path1):
-                    path1 = path1 + [path1[-1]] * (t - len(path1) + 1)
-                if t >= len(path2):
-                    path2 = path2 + [path2[-1]] * (t - len(path2) + 1)
                 # if self.is_conflict_continuous(path1[t - 1], path1[t], path2[t - 1], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
-                #     conflict.time = t
+                #     conflict.time = t - 1
                 #     conflict.robot1 = robot1
                 #     conflict.robot2 = robot2
-                #     conflict.robot1_node = path1[t]
-                #     conflict.robot2_node = path2[t]
+                #     conflict.robot1_node = path1[t - 1]
+                #     conflict.robot2_node = path2[t - 1]
                 #     return conflict
                 if self.is_conflict_discrete(path1[t], path2[t], self.robot_radii[robot1], self.robot_radii[robot2]):
                     conflict.time = t
                     conflict.robot1 = robot1
                     conflict.robot2 = robot2
-                    conflict.robot1_node = path1[t]
-                    conflict.robot2_node = path2[t]
+                    conflict.robot1_key = path1[t].key
+                    conflict.robot2_key = path2[t].key
                     return conflict
         return None
 
     @staticmethod
     def linear_interpolate(prev_node, next_node, radius):
         euclidean_distance = math.hypot(next_node.x - prev_node.x, next_node.y - prev_node.y)
-        step_size = round(euclidean_distance / radius)
+        step_size = math.ceil(euclidean_distance / radius)
+        step_size = 2 if step_size < 2 else step_size
         x = np.linspace(prev_node.x, next_node.x, step_size)
         y = np.linspace(prev_node.y, next_node.y, step_size)
         return x, y
@@ -179,12 +186,14 @@ class MARRF:
             if i < len(x1) and i < len(x2):
                 if math.hypot(x1[i] - x2[i], y1[i] - y2[i]) <= (robot_radius1 + robot_radius2):
                     return True
-            elif i < len(x1):
+            elif len(x1) > i >= len(x2):
                 if math.hypot(x1[i] - next_node2.x, y1[i] - next_node2.y) <= (robot_radius1 + robot_radius2):
                     return True
-            else:
+            elif len(x2) > i >= len(x1):
                 if math.hypot(x2[i] - next_node1.x, y2[i] - next_node1.y) <= (robot_radius1 + robot_radius2):
                     return True
+            else:
+                print("Error")
 
     @staticmethod
     def create_cube(center_x, center_y, width, height, depth):
@@ -221,7 +230,10 @@ class MARRF:
         self.ax.set_xlabel('X')
         self.ax.set_ylabel('Y')
         self.ax.set_zlabel('T')
-        self.ax.set_title('Multi Agent Rapidly Random Forest')
+        self.ax.set_yticklabels([])
+        self.ax.set_xticklabels([])
+        self.ax.set_zticklabels([])
+        self.ax.set_title('High Level of MARRF')
         for path in paths:
             x = [node.x for node in path]
             y = [node.y for node in path]
@@ -241,12 +253,12 @@ class MARRF:
                 cube_faces = self.create_cube(obstacle.x, obstacle.y, obstacle.width, obstacle.height, max_time)
                 face_collection = Poly3DCollection(cube_faces, facecolor='b', alpha=0.1, linewidths=1, edgecolors='k')
                 self.ax.add_collection3d(face_collection)
-        plt.show()
+        plt.pause(0.1)
 
 
 if __name__ == '__main__':
     # read config.yaml
-    with open("configs/deadlock_config.yaml", "r") as file:
+    with open("configs/picture_config.yaml", "r") as file:
         config = yaml.safe_load(file)
 
     # make obstacles
@@ -261,7 +273,7 @@ if __name__ == '__main__':
         obstacles.append(obstacle)
 
     # run MARRF
-    marrf = MARRF(
+    st_cbs = STCBS(
         config["starts"],
         config["goals"],
         config["width"],
@@ -273,15 +285,15 @@ if __name__ == '__main__':
         config["robot_num"]
     )
 
-    cost, solutions = marrf.planning()
-    print("cost: ", cost)
+    sum_of_costs, solutions = st_cbs.planning()
+    print("Sum of costs: ", sum_of_costs)
     for solution in solutions:
         for node in solution:
             print(f"[{node.x}, {node.y}, {node.t}],")
         print("--------------------------------")
 
     # save solutions to yaml
-    with open("solutions.yaml", "w") as file:
+    with open("solutions2.yaml", "w") as file:
         solutions_list = []
         for solution in solutions:
             solution_list = []
