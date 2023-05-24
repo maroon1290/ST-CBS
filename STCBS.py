@@ -2,6 +2,7 @@
 
 import heapq
 import math
+import os
 import time
 from copy import deepcopy
 from itertools import combinations
@@ -44,7 +45,7 @@ class HighLevelNode:
 
 # Multi Agent Rapidly-exploring Random Forest
 class STCBS:
-    def __init__(self, starts, goals, width, height, robot_radii, lambda_factor, expand_distances, obstacles, robot_num):
+    def __init__(self, starts, goals, width, height, robot_radii, lambda_factor, expand_distances, obstacles, robot_num, neighbor_radius, max_iter):
         # set parameters
         self.starts = starts
         self.goals = goals
@@ -55,6 +56,8 @@ class STCBS:
         self.lambda_factor = lambda_factor
         self.expand_distances = expand_distances
         self.obstacles = obstacles
+        self.neighbor_radius = neighbor_radius
+        self.max_iter = max_iter
 
         self.fig = plt.figure(figsize=(10, 10))
         self.ax = self.fig.add_subplot(111, projection='3d')
@@ -63,13 +66,14 @@ class STCBS:
 
         self.solutions = None
         self.sum_of_costs = None
+        self.makespan = None
 
     def planning(self):
         priority_queue = []
 
         init_node = HighLevelNode()
         for start, goal, robot_radius, expand_distance in zip(self.starts, self.goals, self.robot_radii, self.expand_distances):
-            space_time_rrt = USTRRRTstar(start, goal, self.width, self.height, robot_radius, self.lambda_factor, expand_distance, self.obstacles, 3.0)
+            space_time_rrt = USTRRRTstar(start, goal, self.width, self.height, robot_radius, self.lambda_factor, expand_distance, self.obstacles, self.neighbor_radius, self.max_iter)
             init_node.trees.append(space_time_rrt)
         init_node.costs, init_node.solutions = self.planning_all_space_time_rrts(init_node.trees)
         init_node.set_sum_of_costs()
@@ -77,17 +81,28 @@ class STCBS:
 
         cur_iter = 0
         while priority_queue:
-            print("cur_iter: {}".format(cur_iter))
             high_level_node = heapq.heappop(priority_queue)
 
             if self.animation:
                 self.draw_paths_3d_graph(high_level_node.solutions)
 
-            conflict = self.get_first_conflict(high_level_node.solutions)
+            conflict = self.get_first_conflict(high_level_node)
+
             if not conflict:
                 self.solutions = high_level_node.solutions
                 self.sum_of_costs = high_level_node.sum_of_costs
+                self.makespan = max(high_level_node.costs)
                 break
+
+            print(conflict)
+            print(conflict.robot1)
+            print(conflict.robot2)
+            print(conflict.robot1_key)
+            print(conflict.robot2_key)
+            for robot, key in [(conflict.robot1, conflict.robot1_key), (conflict.robot2, conflict.robot2_key)]:
+                for node in high_level_node.trees[robot].node_list:
+                    if node.key == key:
+                        print(robot, node.key)
 
             for robot, key in [(conflict.robot1, conflict.robot1_key), (conflict.robot2, conflict.robot2_key)]:
                 new_high_level_node = deepcopy(high_level_node)
@@ -98,8 +113,6 @@ class STCBS:
                     child = conflict_node.children.popleft()
                     self.prune_children(child, new_high_level_node.trees[robot].node_list)
                 conflict_node.is_valid = False
-                if conflict_node in new_high_level_node.trees[robot].node_list:
-                    print(conflict_node.is_valid)
                 cost, solution = new_high_level_node.trees[robot].planning()
                 new_high_level_node.costs[robot] = cost
                 new_high_level_node.solutions[robot] = solution
@@ -109,7 +122,7 @@ class STCBS:
 
         if self.draw_result:
             self.draw_paths_3d_graph(self.solutions)
-        return self.sum_of_costs, self.solutions
+        return self.makespan, self.sum_of_costs, self.solutions
 
     def prune_children(self, node, node_list: set):
         while node.children:
@@ -137,10 +150,20 @@ class STCBS:
             solutions.append(solution)
         return costs, solutions
 
-    def get_first_conflict(self, paths):
+    def get_first_conflict(self, high_level_node):
+        paths = high_level_node.solutions
+        for i, path in enumerate(paths):
+            count = 0
+            for path_node in path:
+                for ddd in high_level_node.trees[i].node_list:
+                    if ddd.key == path_node.key:
+                        count += 1
+                print(len(path), count)
+
         conflict = Conflict()
         max_t = max([len(path) for path in paths])
         padded_paths = [path + [path[-1]] * (max_t - len(path)) for path in paths]
+
         for t in range(max_t):
             for (robot1, path1), (robot2, path2) in list(combinations(enumerate(padded_paths), 2)):
                 if t == 0:
@@ -257,8 +280,9 @@ class STCBS:
 
 
 if __name__ == '__main__':
+    config_name = "OpenEnvironment_5_0"
     # read config.yaml
-    with open("configs/picture_config.yaml", "r") as file:
+    with open(os.path.join("configs", config_name + ".yaml"), "r") as file:
         config = yaml.safe_load(file)
 
     # make obstacles
@@ -282,18 +306,21 @@ if __name__ == '__main__':
         config["lambda_factor"],
         config["expand_distances"],
         obstacles,
-        config["robot_num"]
+        config["robot_num"],
+        config["neighbor_radius"],
+        config["max_iter"]
     )
 
-    sum_of_costs, solutions = st_cbs.planning()
+    makespan, sum_of_costs, solutions = st_cbs.planning()
     print("Sum of costs: ", sum_of_costs)
+    print("Makespan: ", makespan)
     for solution in solutions:
         for node in solution:
             print(f"[{node.x}, {node.y}, {node.t}],")
         print("--------------------------------")
 
     # save solutions to yaml
-    with open("solutions.yaml", "w") as file:
+    with open(f"solutions/{config_name}_solutions.yaml", "w") as file:
         solutions_list = []
         for solution in solutions:
             solution_list = []

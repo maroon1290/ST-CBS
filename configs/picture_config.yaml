@@ -11,7 +11,7 @@ robot_radii:
 width: 20
 height: 20
 lambda_factor: 0
-collision_check_type: discrete
+neighbor_radius: 3.0
 expand_distances:
   - 3
   - 3

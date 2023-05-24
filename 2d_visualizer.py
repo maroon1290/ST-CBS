@@ -20,11 +20,12 @@ def interpolate(p1, p2, t1, t2, t):
 
 
 if __name__ == '__main__':
+    basename = "OpenEnvironment_5_0"
     # read paths from yaml
-    with open('solutions.yaml', 'r') as f:
+    with open(f'solutions/{basename}_solutions.yaml', 'r') as f:
         paths = yaml.load(f, Loader=yaml.FullLoader)
 
-    with open('configs/picture_config.yaml', 'r') as f:
+    with open(f'configs/{basename}.yaml', 'r') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
 
     # 각 로봇의 x, y 좌표와 시간을 분리
@@ -54,8 +55,8 @@ if __name__ == '__main__':
 
     # 시각화를 위한 설정
     fig, ax = plt.subplots()
-    ax.set_xlim(0, 20)
-    ax.set_ylim(0, 20)
+    ax.set_xlim(0, config["width"])
+    ax.set_ylim(0, config["height"])
 
     # 장애물 시각화 객체 생성
     for x, y, r in circle_obstacles:

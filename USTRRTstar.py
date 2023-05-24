@@ -106,7 +106,7 @@ class RectangleObstacle(ObstacleBase):
 
 
 class USTRRRTstar:
-    def __init__(self, start, goal, width, height, robot_radius, lambda_factor, expand_dis, obstacles, near_radius, max_iter=300):
+    def __init__(self, start, goal, width, height, robot_radius, lambda_factor, expand_dis, obstacles, near_radius, max_iter):
         # set start and goal
         self.start = Node(start[0], start[1])
         self.start.space_time_cost = 0
