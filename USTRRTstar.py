@@ -196,7 +196,7 @@ class USTRRRTstar:
             np.random.uniform(1, self.max_time))
 
     def get_nearest_node(self, rand_node):
-        return min(self.node_list, key=lambda node: rand_node.space_distance(node) if (rand_node.t > node.t and node.is_valid) else float('inf'))
+        return min(self.node_list, key=lambda node: self.get_space_time_distance(rand_node, node) if (rand_node.t > node.t and node.is_valid) else float('inf'))
 
     def steer(self, from_node: Node, to_node: Node):
         d = from_node.space_distance(to_node)
