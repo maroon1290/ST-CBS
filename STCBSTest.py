@@ -91,13 +91,21 @@ if __name__ == '__main__':
                     solutions_list.append(solution_list)
                 yaml.dump(solutions_list, file)
 
-        space_makespan_list.append(space_makespan)
-        sum_of_space_costs_list.append(sum_of_space_costs)
-        time_makespan_list.append(time_makespan)
-        sum_of_time_costs_list.append(sum_of_time_costs)
-        space_time_makespan_list.append(space_time_makespan)
-        sum_of_space_time_costs_list.append(sum_of_space_time_costs)
-        compute_time_list.append(compute_time)
+            space_makespan_list.append(space_makespan)
+            sum_of_space_costs_list.append(sum_of_space_costs)
+            time_makespan_list.append(time_makespan)
+            sum_of_time_costs_list.append(sum_of_time_costs)
+            space_time_makespan_list.append(space_time_makespan)
+            sum_of_space_time_costs_list.append(sum_of_space_time_costs)
+            compute_time_list.append(compute_time)
+        else:
+            space_makespan_list.append(None)
+            sum_of_space_costs_list.append(None)
+            time_makespan_list.append(None)
+            sum_of_time_costs_list.append(None)
+            space_time_makespan_list.append(None)
+            sum_of_space_time_costs_list.append(None)
+            compute_time_list.append(None)
 
     # save makespan and sum of costs to yaml
     with open(f"solutions/{config_name}_raw_data.csv", "w") as file:
