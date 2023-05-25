@@ -8,7 +8,7 @@ from shapely.geometry import Point, box
 if __name__ == '__main__':
     count = 10
     for i in range(count):
-        basename = "CluttedEnvironment_5"
+        basename = "CluttedEnvironment_20"
         with open(f'configs/{basename}.yaml', 'r') as f:
             config = yaml.load(f, Loader=yaml.FullLoader)
 

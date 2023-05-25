@@ -12,11 +12,6 @@ import math
 def euclidean_distance(p1, p2):
     return np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
-
-# 충돌 거리 기준 설정
-collision_distance = 0.5
-
-
 def interpolate(x1, x2, y1, y2, time_step):
     dx = x2 - x1
     dy = y2 - y1
@@ -27,8 +22,9 @@ def interpolate(x1, x2, y1, y2, time_step):
     else:
         return x1 + time_step * math.cos(theta), y1 + time_step * math.sin(theta)
 
+
 if __name__ == '__main__':
-    basename = "CluttedEnvironment_5_0"
+    basename = "CluttedEnvironment_15_2"
     # read paths from yaml
     with open(f'solutions/{basename}_solutions.yaml', 'r') as f:
         paths = yaml.load(f, Loader=yaml.FullLoader)
@@ -140,7 +136,7 @@ if __name__ == '__main__':
         return False
     x_poses = [x_list[i][0] for i in range(robot_num)]
     y_poses = [y_list[i][0] for i in range(robot_num)]
-    time_step = config["expand_distances"][0] / 100
+    time_step = 5 / 100
     def update(frame):
         current_time = frame
         # 시작 위치와 도착 위치 표시

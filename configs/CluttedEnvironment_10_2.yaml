@@ -1,0 +1,131 @@
+expand_distances:
+- 5
+- 5
+- 5
+- 5
+- 5
+- 5
+- 5
+- 5
+- 5
+- 5
+goals:
+- - 14.48135844290492
+  - 20.543769592184567
+- - 14.25970029393563
+  - 6.178878770032301
+- - 0.5798784735305705
+  - 8.98988591192247
+- - 28.035772368607567
+  - 13.582921412339632
+- - 5.252283506502576
+  - 10.030632124792483
+- - 13.586037604670096
+  - 8.918316691996717
+- - 6.402495867789765
+  - 16.37199881793354
+- - 28.29930216711793
+  - 2.1966539302567343
+- - 15.15132106987395
+  - 18.470761055450037
+- - 23.373218595841827
+  - 20.062258142808904
+height: 30
+lambda_factor: 0.5
+max_iter: 500
+neighbor_radius: 5.0
+obstacles:
+- height: 1
+  type: RectangleObstacle
+  width: 1
+  x: 1
+  y: 5
+- height: 2
+  type: RectangleObstacle
+  width: 4
+  x: 3
+  y: 23
+- height: 2
+  type: RectangleObstacle
+  width: 2
+  x: 2
+  y: 15
+- height: 2
+  type: RectangleObstacle
+  width: 1
+  x: 8
+  y: 12
+- height: 2
+  type: RectangleObstacle
+  width: 2
+  x: 12
+  y: 3
+- height: 4
+  type: RectangleObstacle
+  width: 1
+  x: 18
+  y: 9
+- height: 3
+  type: RectangleObstacle
+  width: 4
+  x: 23
+  y: 4
+- height: 2
+  type: RectangleObstacle
+  width: 1
+  x: 14
+  y: 27
+- height: 2
+  type: RectangleObstacle
+  width: 5
+  x: 23
+  y: 15
+- height: 4
+  type: RectangleObstacle
+  width: 3
+  x: 11
+  y: 21
+- height: 2
+  type: RectangleObstacle
+  width: 5
+  x: 23
+  y: 23
+- height: 3
+  type: RectangleObstacle
+  width: 3
+  x: 15
+  y: 15
+robot_num: 10
+robot_radii:
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+starts:
+- - 11.024427304307835
+  - 16.01713450178726
+- - 25.804306527936404
+  - 19.264842665612406
+- - 19.029511885023826
+  - 21.295367855994737
+- - 13.743705842608055
+  - 22.036257440699934
+- - 20.453397964998267
+  - 1.6011437395949628
+- - 28.126511079438046
+  - 20.46505246588107
+- - 26.85929533192598
+  - 5.569255282216488
+- - 15.855828034231676
+  - 2.283145888350095
+- - 6.2975671740347785
+  - 27.94513934278425
+- - 11.215693036034498
+  - 24.983371032437166
+width: 30

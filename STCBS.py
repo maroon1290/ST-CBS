@@ -264,7 +264,7 @@ class STCBS:
 
 
 if __name__ == '__main__':
-    config_name = "CluttedEnvironment_5_0"
+    config_name = "CluttedEnvironment_15_9"
     # read config.yaml
     with open(os.path.join("configs", config_name + ".yaml"), "r") as file:
         config = yaml.safe_load(file)

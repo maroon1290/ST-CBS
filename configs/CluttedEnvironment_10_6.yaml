@@ -1,0 +1,131 @@
+expand_distances:
+- 5
+- 5
+- 5
+- 5
+- 5
+- 5
+- 5
+- 5
+- 5
+- 5
+goals:
+- - 21.46569556706794
+  - 10.786526339798042
+- - 1.514663795640224
+  - 7.979828485738328
+- - 3.950043417050864
+  - 8.31242460780771
+- - 21.056297976660886
+  - 19.692199343011012
+- - 29.164148216184547
+  - 2.987086807929439
+- - 6.195516938838342
+  - 15.185036285141214
+- - 19.307499558072948
+  - 29.49425466633515
+- - 19.029814103859746
+  - 6.29706690762332
+- - 29.006030472651975
+  - 8.098570205210773
+- - 7.85882953005597
+  - 21.66739749041655
+height: 30
+lambda_factor: 0.5
+max_iter: 500
+neighbor_radius: 5.0
+obstacles:
+- height: 1
+  type: RectangleObstacle
+  width: 1
+  x: 1
+  y: 5
+- height: 2
+  type: RectangleObstacle
+  width: 4
+  x: 3
+  y: 23
+- height: 2
+  type: RectangleObstacle
+  width: 2
+  x: 2
+  y: 15
+- height: 2
+  type: RectangleObstacle
+  width: 1
+  x: 8
+  y: 12
+- height: 2
+  type: RectangleObstacle
+  width: 2
+  x: 12
+  y: 3
+- height: 4
+  type: RectangleObstacle
+  width: 1
+  x: 18
+  y: 9
+- height: 3
+  type: RectangleObstacle
+  width: 4
+  x: 23
+  y: 4
+- height: 2
+  type: RectangleObstacle
+  width: 1
+  x: 14
+  y: 27
+- height: 2
+  type: RectangleObstacle
+  width: 5
+  x: 23
+  y: 15
+- height: 4
+  type: RectangleObstacle
+  width: 3
+  x: 11
+  y: 21
+- height: 2
+  type: RectangleObstacle
+  width: 5
+  x: 23
+  y: 23
+- height: 3
+  type: RectangleObstacle
+  width: 3
+  x: 15
+  y: 15
+robot_num: 10
+robot_radii:
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+starts:
+- - 18.088763704218177
+  - 29.14755951115201
+- - 9.30223519069218
+  - 0.7760125914061095
+- - 17.519880245688935
+  - 15.695535448063833
+- - 6.24532363274806
+  - 25.453428178449172
+- - 17.7227660688279
+  - 21.67670682430481
+- - 6.215728696031853
+  - 3.4862248881981324
+- - 9.747617044732365
+  - 17.097371311275825
+- - 6.153953650756025
+  - 12.287871386172709
+- - 12.817237751905758
+  - 17.770613648900724
+- - 3.6429801787475937
+  - 25.287351734809288
+width: 30

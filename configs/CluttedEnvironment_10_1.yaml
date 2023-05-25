@@ -1,0 +1,131 @@
+expand_distances:
+- 5
+- 5
+- 5
+- 5
+- 5
+- 5
+- 5
+- 5
+- 5
+- 5
+goals:
+- - 19.72356901682223
+  - 24.359793942107707
+- - 0.521433355639748
+  - 20.144630400535284
+- - 19.969368135959414
+  - 6.582315324220867
+- - 4.576001016664652
+  - 4.566754098430593
+- - 23.569456120100867
+  - 8.932720298081811
+- - 21.877867443838873
+  - 6.816842567288894
+- - 13.948935257204713
+  - 1.6369573062128175
+- - 23.508636956851404
+  - 19.69554792502153
+- - 20.947744107636172
+  - 16.60460975252422
+- - 10.792016939875818
+  - 26.310023490317153
+height: 30
+lambda_factor: 0.5
+max_iter: 500
+neighbor_radius: 5.0
+obstacles:
+- height: 1
+  type: RectangleObstacle
+  width: 1
+  x: 1
+  y: 5
+- height: 2
+  type: RectangleObstacle
+  width: 4
+  x: 3
+  y: 23
+- height: 2
+  type: RectangleObstacle
+  width: 2
+  x: 2
+  y: 15
+- height: 2
+  type: RectangleObstacle
+  width: 1
+  x: 8
+  y: 12
+- height: 2
+  type: RectangleObstacle
+  width: 2
+  x: 12
+  y: 3
+- height: 4
+  type: RectangleObstacle
+  width: 1
+  x: 18
+  y: 9
+- height: 3
+  type: RectangleObstacle
+  width: 4
+  x: 23
+  y: 4
+- height: 2
+  type: RectangleObstacle
+  width: 1
+  x: 14
+  y: 27
+- height: 2
+  type: RectangleObstacle
+  width: 5
+  x: 23
+  y: 15
+- height: 4
+  type: RectangleObstacle
+  width: 3
+  x: 11
+  y: 21
+- height: 2
+  type: RectangleObstacle
+  width: 5
+  x: 23
+  y: 23
+- height: 3
+  type: RectangleObstacle
+  width: 3
+  x: 15
+  y: 15
+robot_num: 10
+robot_radii:
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+starts:
+- - 28.22174782467664
+  - 12.787688064816747
+- - 5.783903806168901
+  - 19.10186737075017
+- - 19.05641099937678
+  - 23.461075084381882
+- - 19.81600892349082
+  - 4.630500438685253
+- - 14.978405063148431
+  - 28.14756243402799
+- - 17.64701809985229
+  - 13.362132388531371
+- - 3.600814394448249
+  - 28.087210120723192
+- - 22.80287722558349
+  - 20.10461750781204
+- - 16.58138912084569
+  - 27.3405510391924
+- - 7.872500914437753
+  - 25.311994777721733
+width: 30

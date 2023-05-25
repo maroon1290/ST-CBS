@@ -1,0 +1,113 @@
+robot_num: 20
+starts:
+  - [2, 2]
+goals:
+  - [2, 8]
+robot_radii:
+  - 0.5
+  - 0.5
+  - 0.5
+  - 0.5
+  - 0.5
+  - 0.5
+  - 0.5
+  - 0.5
+  - 0.5
+  - 0.5
+  - 0.5
+  - 0.5
+  - 0.5
+  - 0.5
+  - 0.5
+  - 0.5
+  - 0.5
+  - 0.5
+  - 0.5
+  - 0.5
+width: 30
+height: 30
+lambda_factor: 0.5
+neighbor_radius: 5.0
+max_iter: 500
+expand_distances:
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+obstacles:
+  - type: RectangleObstacle
+    x: 1
+    y: 5
+    width: 1
+    height: 1
+  - type: RectangleObstacle
+    x: 3
+    y: 23
+    width: 4
+    height: 2
+  - type: RectangleObstacle
+    x: 2
+    y: 15
+    width: 2
+    height: 2
+  - type: RectangleObstacle
+    x: 8
+    y: 12
+    width: 1
+    height: 2
+  - type: RectangleObstacle
+    x: 12
+    y: 3
+    width: 2
+    height: 2
+  - type: RectangleObstacle
+    x: 18
+    y: 9
+    width: 1
+    height: 4
+  - type: RectangleObstacle
+    x: 23
+    y: 4
+    width: 4
+    height: 3
+  - type: RectangleObstacle
+    x: 14
+    y: 27
+    width: 1
+    height: 2
+  - type: RectangleObstacle
+    x: 23
+    y: 15
+    width: 5
+    height: 2
+  - type: RectangleObstacle
+    x: 11
+    y: 21
+    width: 3
+    height: 4
+  - type: RectangleObstacle
+    x: 23
+    y: 23
+    width: 5
+    height: 2
+  - type: RectangleObstacle
+    x: 15
+    y: 15
+    width: 3
+    height: 3
