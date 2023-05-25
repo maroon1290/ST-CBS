@@ -4,7 +4,10 @@ import yaml
 from matplotlib.animation import FuncAnimation
 from matplotlib.patches import Circle, Rectangle
 from itertools import combinations
+import math
 
+# 1초에 최대 5m까지 이동가능
+# 천개로 나누면
 
 def euclidean_distance(p1, p2):
     return np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
@@ -14,10 +17,15 @@ def euclidean_distance(p1, p2):
 collision_distance = 0.5
 
 
-def interpolate(p1, p2, t1, t2, t):
-    ratio = (t - t1) / (t2 - t1)
-    return p1 + ratio * (p2 - p1)
-
+def interpolate(x1, x2, y1, y2, time_step):
+    dx = x2 - x1
+    dy = y2 - y1
+    d = math.hypot(dx, dy)
+    theta = math.atan2(dy, dx)
+    if d < time_step:
+        return x2, y2
+    else:
+        return x1 + time_step * math.cos(theta), y1 + time_step * math.sin(theta)
 
 if __name__ == '__main__':
     basename = "OpenEnvironment_15_1"
@@ -55,7 +63,7 @@ if __name__ == '__main__':
             raise ValueError('invalid obstacle type')
 
     # 시각화를 위한 설정
-    fig, ax = plt.subplots(figsize=(15, 15))
+    fig, ax = plt.subplots(figsize=(10, 10))
     ax.set_xlim(0, config["width"])
     ax.set_ylim(0, config["height"])
 
@@ -130,34 +138,34 @@ if __name__ == '__main__':
             if distance <= obs_r + robot_radius:
                 return True
         return False
-
+    x_poses = [x_list[i][0] for i in range(robot_num)]
+    y_poses = [y_list[i][0] for i in range(robot_num)]
+    time_step = 5 / 100
     def update(frame):
         current_time = frame
         # 시작 위치와 도착 위치 표시
         for i, (start_point, end_point) in enumerate(zip(start_points, end_points)):
             start_point.set_center((x_list[i][0], y_list[i][0]))
             end_point.set_xy((x_list[i][-1] - 0.2, y_list[i][-1] - 0.2))
-
         # 각 로봇의 위치 갱신
         for i, (robot, path_line, x, y, t, text) in enumerate(zip(robots, path_lines, x_list, y_list, t_list, robot_text)):
             current_position = np.searchsorted(t, current_time, side='right') - 1
             if current_position >= 0:
                 if current_position < len(t) - 1:
-                    x_pos = interpolate(x[current_position], x[current_position + 1], t[current_position],
-                                        t[current_position + 1], current_time)
-                    y_pos = interpolate(y[current_position], y[current_position + 1], t[current_position],
-                                        t[current_position + 1], current_time)
+                    x_poses[i], y_poses[i] = interpolate(x_poses[i], x[current_position + 1],
+                                               y_poses[i], y[current_position + 1],
+                                               time_step)
                 else:
-                    x_pos, y_pos = x[-1], y[-1]
+                    x_poses[i], y_poses[i] = x[-1], y[-1]
 
                 # 로봇 번호 텍스트 위치 변경
-                text.set_position((x_pos + 0.2, y_pos - 0.2))
+                text.set_position((x_poses[i] + 0.2, y_poses[i] - 0.2))
 
-                robot.set_center((x_pos, y_pos))
-                path_line.set_data(x[:current_position + 1] + (x_pos,), y[:current_position + 1] + (y_pos,))
+                robot.set_center((x_poses[i], y_poses[i]))
+                path_line.set_data(x[:current_position + 1] + (x_poses[i],), y[:current_position + 1] + (y_poses[i],))
 
             # 로봇과 장애물 간 충돌 감지
-            if check_collision((x_pos, y_pos), circle_obstacles, config['robot_radii'][i]):
+            if check_collision((x_poses[i], y_poses[i]), circle_obstacles, config['robot_radii'][i]):
                 print(f"Robot {i} collided with an obstacle!")
 
         # 각 로봇들간의 충돌 감지
@@ -176,6 +184,6 @@ if __name__ == '__main__':
 
     # 애니메이션 설정
     max_time = max(max(t) for t in t_list)
-    ani = FuncAnimation(fig, update, frames=np.arange(0, max_time + 0.01, 0.01), blit=True, interval=1, repeat=False)
+    ani = FuncAnimation(fig, update, frames=np.arange(0, max_time + 0.01, 0.01), blit=True, interval=10, repeat=False)
 
     plt.show()
