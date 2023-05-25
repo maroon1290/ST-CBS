@@ -64,8 +64,8 @@ class STCBS:
         self.neighbor_radius = neighbor_radius
         self.max_iter = max_iter
 
-        # self.fig = plt.figure(figsize=(10, 10))
-        # self.ax = self.fig.add_subplot(111, projection='3d')
+        self.fig = plt.figure(figsize=(10, 10))
+        self.ax = self.fig.add_subplot(111, projection='3d')
         self.animation = False
         self.draw_result = False
 
@@ -264,7 +264,7 @@ class STCBS:
 
 
 if __name__ == '__main__':
-    config_name = "NarrowEnvironment_0"
+    config_name = "CluttedEnvironment_5_0"
     # read config.yaml
     with open(os.path.join("configs", config_name + ".yaml"), "r") as file:
         config = yaml.safe_load(file)

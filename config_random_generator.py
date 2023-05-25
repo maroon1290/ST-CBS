@@ -3,10 +3,12 @@ import math
 import yaml
 import random
 
+from shapely.geometry import Point, box
+
 if __name__ == '__main__':
     count = 10
     for i in range(count):
-        basename = "OpenEnvironment_20"
+        basename = "CluttedEnvironment_5"
         with open(f'configs/{basename}.yaml', 'r') as f:
             config = yaml.load(f, Loader=yaml.FullLoader)
 
@@ -41,9 +43,15 @@ if __name__ == '__main__':
                             conflict = True
 
                     for obstacle in obstacles:
-                        if math.hypot(obstacle.x - start[0], obstacle.y - start[1]) > obstacle.radius + radius or \
-                                math.hypot(obstacle.x - goal[0], obstacle.y - goal[1]) > obstacle.radius + radius:
+                        start_circle = Point(start[0], start[1]).buffer(radius)
+                        goal_circle = Point(goal[0], goal[1]).buffer(radius)
+                        obstacle_rectangle = box(obstacle['x'] - obstacle["width"] / 2.0, obstacle['y'] - obstacle["height"] / 2.0,
+                                        obstacle['x'] + obstacle["width"] / 2.0,
+                                        obstacle['y'] + obstacle["height"] / 2.0)
+
+                        if obstacle_rectangle.intersects(start_circle) or obstacle_rectangle.intersects(goal_circle):
                             conflict = True
+
                     if not conflict:
                         return start, goal
 

@@ -1,0 +1,101 @@
+expand_distances:
+- 5
+- 5
+- 5
+- 5
+- 5
+goals:
+- - 27.03361345754516
+  - 29.43536221269801
+- - 28.93464486372149
+  - 12.538595461455033
+- - 2.071617403459605
+  - 20.16020177558028
+- - 5.963657078688725
+  - 14.273637519626313
+- - 1.9077313724517424
+  - 10.76417040393819
+height: 30
+lambda_factor: 0.5
+max_iter: 500
+neighbor_radius: 5.0
+obstacles:
+- height: 1
+  type: RectangleObstacle
+  width: 1
+  x: 1
+  y: 5
+- height: 2
+  type: RectangleObstacle
+  width: 4
+  x: 3
+  y: 23
+- height: 2
+  type: RectangleObstacle
+  width: 2
+  x: 2
+  y: 15
+- height: 2
+  type: RectangleObstacle
+  width: 1
+  x: 8
+  y: 12
+- height: 2
+  type: RectangleObstacle
+  width: 2
+  x: 12
+  y: 3
+- height: 4
+  type: RectangleObstacle
+  width: 1
+  x: 18
+  y: 9
+- height: 3
+  type: RectangleObstacle
+  width: 4
+  x: 23
+  y: 4
+- height: 2
+  type: RectangleObstacle
+  width: 1
+  x: 14
+  y: 27
+- height: 2
+  type: RectangleObstacle
+  width: 5
+  x: 23
+  y: 15
+- height: 4
+  type: RectangleObstacle
+  width: 3
+  x: 11
+  y: 21
+- height: 2
+  type: RectangleObstacle
+  width: 5
+  x: 23
+  y: 23
+- height: 3
+  type: RectangleObstacle
+  width: 3
+  x: 15
+  y: 15
+robot_num: 5
+robot_radii:
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+- 0.5
+starts:
+- - 6.365903141391058
+  - 23.582595498628006
+- - 4.290689301357375
+  - 15.602057667981562
+- - 28.360025579849278
+  - 8.121055604734494
+- - 3.7331582346343817
+  - 20.678721150423147
+- - 3.682620637498659
+  - 24.976119371553505
+width: 30

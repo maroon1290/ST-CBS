@@ -28,7 +28,7 @@ def interpolate(x1, x2, y1, y2, time_step):
         return x1 + time_step * math.cos(theta), y1 + time_step * math.sin(theta)
 
 if __name__ == '__main__':
-    basename = "NarrowEnvironment_0"
+    basename = "CluttedEnvironment_5_0"
     # read paths from yaml
     with open(f'solutions/{basename}_solutions.yaml', 'r') as f:
         paths = yaml.load(f, Loader=yaml.FullLoader)

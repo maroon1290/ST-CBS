@@ -11,9 +11,9 @@ import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
-# fig = plt.figure(figsize=(10, 10))
-# ax = fig.add_subplot(111, projection='3d')
-# ax.view_init(elev=30., azim=120)
+fig = plt.figure(figsize=(10, 10))
+ax = fig.add_subplot(111, projection='3d')
+ax.view_init(elev=30., azim=120)
 
 
 class Node:
@@ -154,7 +154,7 @@ class USTRRRTstar:
                 if new_node.t + 1 > self.max_time:
                     self.max_time = new_node.t + 1
 
-                if self.animation:
+                if self.animation and i % 10 == 0:
                     self.draw_nodes_edge_3d_graph()
 
                 if self.is_near_goal(new_node):

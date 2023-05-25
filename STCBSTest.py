@@ -6,12 +6,12 @@ import multiprocessing
 
 
 if __name__ == '__main__':
-    count = 20
+    count = 9
     makespan_list = []
     sum_of_costs_list = []
     compute_time_list = []
     for i in range(count):
-        config_name = f"NarrowEnvironment_{i}"
+        config_name = f"NarrowEnvironment_5_{i}"
         # read config.yaml
         with open(os.path.join("configs", config_name + ".yaml"), "r") as file:
             config = yaml.safe_load(file)
@@ -41,7 +41,7 @@ if __name__ == '__main__':
             config["neighbor_radius"],
             config["max_iter"]
         )
-
+        print(id(st_cbs))
         makespan = None
         sum_of_costs = None
         solutions = None
