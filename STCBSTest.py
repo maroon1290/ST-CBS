@@ -6,7 +6,7 @@ import multiprocessing
 
 
 if __name__ == '__main__':
-    count = 9
+    count = 10
     space_makespan_list = []
     sum_of_space_costs_list = []
     time_makespan_list = []
