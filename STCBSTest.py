@@ -14,8 +14,9 @@ if __name__ == '__main__':
     space_time_makespan_list = []
     sum_of_space_time_costs_list = []
     solutions_list = []
+    compute_time_list = []
     for i in range(count):
-        config_name = f"OpenEnvironment_5_{i}"
+        config_name = f"NarrowEnvironment_{i}"
         # read config.yaml
         with open(os.path.join("configs", config_name + ".yaml"), "r") as file:
             config = yaml.safe_load(file)
@@ -65,8 +66,9 @@ if __name__ == '__main__':
             pool.close()
         pool.join()
         end_time = time.time()
+        compute_time = end_time - start_time
         if solutions:
-            print(f"{config_name} finished in {end_time - start_time} seconds")
+            print(f"{config_name} finished in {compute_time} seconds")
             print(f"space_makespan: {space_makespan}")
             print(f"sum_of_space_costs: {sum_of_space_costs}")
             print(f"time_makespan: {time_makespan}")
@@ -95,9 +97,10 @@ if __name__ == '__main__':
             sum_of_time_costs_list.append(sum_of_time_costs)
             space_time_makespan_list.append(space_time_makespan)
             sum_of_space_time_costs_list.append(sum_of_space_time_costs)
+            compute_time_list.append(compute_time)
 
     # save makespan and sum of costs to yaml
     with open(f"solutions/{config_name}_raw_data.csv", "w") as file:
-        file.write("space_makespan, sum_of_space_costs, time_makespan, sum_of_time_costs, space_time_makespan, sum_of_space_time_costs \n")
-        for space_makespan, sum_of_space_costs, time_makespan, sum_of_time_costs, space_time_makespan, sum_of_space_time_costs in zip(space_makespan_list, sum_of_space_costs_list, time_makespan_list, sum_of_time_costs_list, space_time_makespan_list, sum_of_space_time_costs_list):
-            file.write(f"{space_makespan}, {sum_of_space_costs}, {time_makespan}, {sum_of_time_costs}, {space_time_makespan}, {sum_of_space_time_costs} \n")
+        file.write("space_makespan, sum_of_space_costs, time_makespan, sum_of_time_costs, space_time_makespan, sum_of_space_time_costs, compute_time \n")
+        for space_makespan, sum_of_space_costs, time_makespan, sum_of_time_costs, space_time_makespan, sum_of_space_time_costs, compute_time in zip(space_makespan_list, sum_of_space_costs_list, time_makespan_list, sum_of_time_costs_list, space_time_makespan_list, sum_of_space_time_costs_list, compute_time_list):
+            file.write(f"{space_makespan}, {sum_of_space_costs}, {time_makespan}, {sum_of_time_costs}, {space_time_makespan}, {sum_of_space_time_costs}, {compute_time}\n")
