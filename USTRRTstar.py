@@ -38,16 +38,27 @@ class Node:
 
 
 def linear_interpolate(from_node, to_node, radius):
-    euclidean_distance = math.hypot(to_node.x - from_node.x, to_node.y - from_node.y)
-    step_size = round(euclidean_distance / radius)
-    x = np.linspace(from_node.x, to_node.x, step_size)
-    y = np.linspace(from_node.y, to_node.y, step_size)
-    return x, y
+    dx = from_node.x - to_node.x
+    dy = from_node.y - to_node.y
+    d = math.hypot(dx, dy)
+    theta = math.atan2(dy, dx)
+    interpolated_x = [from_node.x]
+    interpolated_y = [from_node.y]
+    n_expand = math.floor(d / radius)
+    for _ in range(n_expand):
+        interpolated_x.append(interpolated_x[-1] + radius * math.cos(theta))
+        interpolated_y.append(interpolated_y[-1] + radius * math.sin(theta))
+
+    d = math.hypot(to_node.x - interpolated_x[-1], to_node.y - interpolated_y[-1])
+    if d <= radius:
+        interpolated_x.append(to_node.x)
+        interpolated_y.append(to_node.y)
+    return interpolated_x, interpolated_y
 
 
 class ObstacleBase(metaclass=ABCMeta):
     @abstractmethod
-    def is_collide_continuous(self, from_node, to_node, radius):
+    def is_collide(self, from_node, to_node, radius):
         pass
 
 
@@ -371,7 +382,7 @@ if __name__ == '__main__':
     start = (2, 10)
     goal = (18, 10)
     obstacles = [
-        # CircleObstacle(10, 10, 5),
+        CircleObstacle(10, 10, 5),
     ]
     space_time_rrt = USTRRRTstar(start=start, goal=goal, width=20.0, height=20.0, robot_radius=1.5,
                                   lambda_factor=0.5, expand_dis=3.0, obstacles=obstacles, near_radius=5.0, max_iter=500)

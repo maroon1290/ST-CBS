@@ -170,12 +170,22 @@ class STCBS:
 
     @staticmethod
     def linear_interpolate(prev_node, next_node, radius):
-        euclidean_distance = math.hypot(next_node.x - prev_node.x, next_node.y - prev_node.y)
-        step_size = math.ceil(euclidean_distance / radius)
-        step_size = 2 if step_size < 2 else step_size
-        x = np.linspace(prev_node.x, next_node.x, step_size)
-        y = np.linspace(prev_node.y, next_node.y, step_size)
-        return x, y
+        dx = next_node.x - prev_node.x
+        dy = next_node.y - prev_node.y
+        d = math.hypot(dx, dy)
+        theta = math.atan2(dy, dx)
+        interpolated_x = [prev_node.x]
+        interpolated_y = [prev_node.y]
+        n_expand = math.floor(d / radius)
+        for _ in range(n_expand):
+            interpolated_x.append(interpolated_x[-1] + radius * math.cos(theta))
+            interpolated_y.append(interpolated_y[-1] + radius * math.sin(theta))
+
+        d = math.hypot(next_node.x - interpolated_x[-1], next_node.y - interpolated_y[-1])
+        if d <= radius:
+            interpolated_x.append(next_node.x)
+            interpolated_y.append(next_node.y)
+        return interpolated_x, interpolated_y
 
     def is_conflict_continuous(self, prev_node1, next_node1, prev_node2, next_node2, robot_radius1, robot_radius2):
         x1, y1 = self.linear_interpolate(prev_node1, next_node1, robot_radius1)
