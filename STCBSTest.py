@@ -7,9 +7,13 @@ import multiprocessing
 
 if __name__ == '__main__':
     count = 9
-    makespan_list = []
-    sum_of_costs_list = []
-    compute_time_list = []
+    space_makespan_list = []
+    sum_of_space_costs_list = []
+    time_makespan_list = []
+    sum_of_time_costs_list = []
+    space_time_makespan_list = []
+    sum_of_space_time_costs_list = []
+    solutions_list = []
     for i in range(count):
         config_name = f"CluttedEnvironment_5_{i}"
         # read config.yaml
@@ -42,14 +46,18 @@ if __name__ == '__main__':
             config["max_iter"]
         )
         print(id(st_cbs))
-        makespan = None
-        sum_of_costs = None
+        space_makespan = None
+        sum_of_space_costs = None
+        time_makespan = None
+        sum_of_time_costs = None
+        space_time_makespan = None
+        sum_of_space_time_costs = None
         solutions = None
         start_time = time.time()
         pool = multiprocessing.Pool(processes=1)
         result = pool.apply_async(st_cbs.planning)
         try:
-            makespan, sum_of_costs, solutions = result.get(timeout=300)
+            space_makespan, sum_of_space_costs, time_makespan, sum_of_time_costs, space_time_makespan, sum_of_space_time_costs, solutions = result.get(timeout=300)
         except multiprocessing.TimeoutError:
             print(f"{config_name} didn't finish within 5 minutes. Terminating...")
             pool.terminate()
@@ -58,9 +66,14 @@ if __name__ == '__main__':
         pool.join()
         end_time = time.time()
         if solutions:
-            print(f"Time: {end_time - start_time}")
-            print("Makespan: ", makespan)
-            print("Sum of costs: ", sum_of_costs)
+            print(f"{config_name} finished in {end_time - start_time} seconds")
+            print(f"space_makespan: {space_makespan}")
+            print(f"sum_of_space_costs: {sum_of_space_costs}")
+            print(f"time_makespan: {time_makespan}")
+            print(f"sum_of_time_costs: {sum_of_time_costs}")
+            print(f"space_time_makespan: {space_time_makespan}")
+            print(f"sum_of_space_time_costs: {sum_of_space_time_costs}")
+
             for solution in solutions:
                 for node in solution:
                     print(f"[{node.x}, {node.y}, {node.t}],")
@@ -76,15 +89,15 @@ if __name__ == '__main__':
                     solutions_list.append(solution_list)
                 yaml.dump(solutions_list, file)
 
-            makespan_list.append(makespan)
-            sum_of_costs_list.append(sum_of_costs)
-            compute_time_list.append(end_time - start_time)
-        else:
-            makespan_list.append(None)
-            sum_of_costs_list.append(None)
-            compute_time_list.append(None)
+            space_makespan_list.append(space_makespan)
+            sum_of_space_costs_list.append(sum_of_space_costs)
+            time_makespan_list.append(time_makespan)
+            sum_of_time_costs_list.append(sum_of_time_costs)
+            space_time_makespan_list.append(space_time_makespan)
+            sum_of_space_time_costs_list.append(sum_of_space_time_costs)
 
     # save makespan and sum of costs to yaml
     with open(f"solutions/{config_name}_raw_data.csv", "w") as file:
-        for makespan, sum_of_costs, compute_time in zip(makespan_list, sum_of_costs_list, compute_time_list):
-            file.write(f"{makespan}, {sum_of_costs}, {compute_time} \n")
+        file.write("space_makespan, sum_of_space_costs, time_makespan, sum_of_time_costs, space_time_makespan, sum_of_space_time_costs \n")
+        for space_makespan, sum_of_space_costs, time_makespan, sum_of_time_costs, space_time_makespan, sum_of_space_time_costs in zip(space_makespan_list, sum_of_space_costs_list, time_makespan_list, sum_of_time_costs_list, space_time_makespan_list, sum_of_space_time_costs_list):
+            file.write(f"{space_makespan}, {sum_of_space_costs}, {time_makespan}, {sum_of_time_costs}, {space_time_makespan}, {sum_of_space_time_costs} \n")
