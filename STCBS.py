@@ -104,12 +104,15 @@ class STCBS:
 
             if not conflict:
                 self.solutions = high_level_node.solutions
+                high_level_node.set_sum_of_space_costs()
+                high_level_node.set_sum_of_time_costs()
+                high_level_node.set_sum_of_space_time_costs()
                 self.sum_of_space_costs = high_level_node.sum_of_space_costs
                 self.space_makespan = max(high_level_node.space_costs)
                 self.sum_of_time_costs = high_level_node.sum_of_time_costs
                 self.time_makespan = max(high_level_node.time_costs)
-                self.sum_of_space_costs = high_level_node.sum_of_space_time_costs
-                self.space_makespan = max(high_level_node.space_costs)
+                self.sum_of_space_time_costs = high_level_node.sum_of_space_time_costs
+                self.space_time_makespan = max(high_level_node.space_time_costs)
                 break
 
             for robot, key in [(conflict.robot1, conflict.robot1_key), (conflict.robot2, conflict.robot2_key)]:
@@ -281,7 +284,7 @@ class STCBS:
 
 
 if __name__ == '__main__':
-    config_name = "CluttedEnvironment_15_9"
+    config_name = "OpenEnvironment_5_0"
     # read config.yaml
     with open(os.path.join("configs", config_name + ".yaml"), "r") as file:
         config = yaml.safe_load(file)

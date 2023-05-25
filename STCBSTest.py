@@ -15,7 +15,7 @@ if __name__ == '__main__':
     sum_of_space_time_costs_list = []
     solutions_list = []
     for i in range(count):
-        config_name = f"CluttedEnvironment_10_{i}"
+        config_name = f"OpenEnvironment_5_{i}"
         # read config.yaml
         with open(os.path.join("configs", config_name + ".yaml"), "r") as file:
             config = yaml.safe_load(file)
