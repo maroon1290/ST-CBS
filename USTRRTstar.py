@@ -172,10 +172,11 @@ class USTRRRTstar:
 
         path = self.get_final_path()
         space_cost = self.get_space_cost(path)
+        time_cost = self.get_time_cost(path)
         space_time_cost = self.get_space_time_cost(path)
         if self.draw_result:
             self.draw_path_3d_graph(path)
-        return space_cost, space_time_cost, path
+        return space_cost, time_cost, space_time_cost, path
 
     def is_collide(self, from_node, to_node, obstacles):
         for obstacle in obstacles:
@@ -263,18 +264,24 @@ class USTRRRTstar:
         path.reverse()
         return path
 
-    def get_space_time_cost(self, path):
-        space_time_cost = 0
-        for i in range(len(path) - 1):
-            space_time_cost += self.get_space_time_distance(path[i], path[i + 1])
-        return space_time_cost
-
     @staticmethod
     def get_space_cost(path):
         space_cost = 0
         for i in range(len(path) - 1):
             space_cost += path[i].space_distance(path[i + 1])
         return space_cost
+
+    def get_time_cost(self, path):
+        time_cost = 0
+        for i in range(len(path) - 1):
+            time_cost += path[i].time_distance(path[i + 1])
+        return time_cost
+
+    def get_space_time_cost(self, path):
+        space_time_cost = 0
+        for i in range(len(path) - 1):
+            space_time_cost += self.get_space_time_distance(path[i], path[i + 1])
+        return space_time_cost
 
     @staticmethod
     def create_cube(center_x, center_y, width, height, depth):

@@ -33,9 +33,11 @@ class HighLevelNode:
     def __init__(self):
         self.trees = []
         self.space_costs = []
+        self.time_costs = []
         self.space_time_costs = []
         self.solutions = []
         self.sum_of_space_costs = None
+        self.sum_of_time_costs = None
         self.sum_of_space_time_costs = None
 
     def __lt__(self, other):
@@ -43,6 +45,9 @@ class HighLevelNode:
 
     def set_sum_of_space_costs(self):
         self.sum_of_space_costs = sum(self.space_costs)
+
+    def set_sum_of_time_costs(self):
+        self.sum_of_time_costs = sum(self.time_costs)
 
     def set_sum_of_space_time_costs(self):
         self.sum_of_space_time_costs = sum(self.space_time_costs)
@@ -71,7 +76,11 @@ class STCBS:
 
         self.solutions = None
         self.sum_of_space_costs = None
-        self.makespan = None
+        self.space_makespan = None
+        self.sum_of_time_costs = None
+        self.time_makespan = None
+        self.sum_of_space_time_costs = None
+        self.space_time_makespan = None
 
     def planning(self):
         priority_queue = []
@@ -80,7 +89,7 @@ class STCBS:
         for start, goal, robot_radius, expand_distance in zip(self.starts, self.goals, self.robot_radii, self.expand_distances):
             space_time_rrt = USTRRRTstar(start, goal, self.width, self.height, robot_radius, self.lambda_factor, expand_distance, self.obstacles, self.neighbor_radius, self.max_iter)
             init_node.trees.append(space_time_rrt)
-        init_node.space_costs, init_node.space_time_costs, init_node.solutions = self.planning_all_space_time_rrts(init_node.trees)
+        init_node.space_costs, init_node.time_costs, init_node.space_time_costs, init_node.solutions = self.planning_all_space_time_rrts(init_node.trees)
         init_node.set_sum_of_space_time_costs()
         heapq.heappush(priority_queue, init_node)
 
@@ -94,10 +103,13 @@ class STCBS:
             conflict = self.get_first_conflict(high_level_node)
 
             if not conflict:
-                high_level_node.set_sum_of_space_costs()
                 self.solutions = high_level_node.solutions
                 self.sum_of_space_costs = high_level_node.sum_of_space_costs
-                self.makespan = max(high_level_node.space_costs)
+                self.space_makespan = max(high_level_node.space_costs)
+                self.sum_of_time_costs = high_level_node.sum_of_time_costs
+                self.time_makespan = max(high_level_node.time_costs)
+                self.sum_of_space_costs = high_level_node.sum_of_space_time_costs
+                self.space_makespan = max(high_level_node.space_costs)
                 break
 
             for robot, key in [(conflict.robot1, conflict.robot1_key), (conflict.robot2, conflict.robot2_key)]:
@@ -109,17 +121,20 @@ class STCBS:
                     child = conflict_node.children.popleft()
                     self.prune_children(child, new_high_level_node.trees[robot].node_list)
                 conflict_node.is_valid = False
-                space_cost, space_time_cost, solution = new_high_level_node.trees[robot].planning()
+                space_cost, time_cost, space_time_cost, solution = new_high_level_node.trees[robot].planning()
                 new_high_level_node.space_costs[robot] = space_cost
+                new_high_level_node.time_costs[robot] = time_cost
                 new_high_level_node.space_time_costs[robot] = space_time_cost
                 new_high_level_node.solutions[robot] = solution
+                new_high_level_node.set_sum_of_space_costs()
+                new_high_level_node.set_sum_of_time_costs()
                 new_high_level_node.set_sum_of_space_time_costs()
                 heapq.heappush(priority_queue, new_high_level_node)
             cur_iter += 1
 
         if self.draw_result:
             self.draw_paths_3d_graph(self.solutions)
-        return self.makespan, self.sum_of_space_costs, self.solutions
+        return self.space_makespan, self.sum_of_space_costs, self.time_makespan, self.sum_of_time_costs, self.space_time_makespan, self.sum_of_space_time_costs, self.solutions
 
     def prune_children(self, node, node_list: set):
         while node.children:
@@ -140,14 +155,16 @@ class STCBS:
 
     def planning_all_space_time_rrts(self, trees):
         space_costs = []
+        time_costs = []
         space_time_costs = []
         solutions = []
         for tree in trees:
-            space_cost, space_time_cost , solution = tree.planning()
+            space_cost, time_cost, space_time_cost, solution = tree.planning()
             space_costs.append(space_cost)
+            time_costs.append(time_cost)
             space_time_costs.append(space_time_cost)
             solutions.append(solution)
-        return space_costs, space_time_costs, solutions
+        return space_costs, time_costs, space_time_costs, solutions
 
     def get_first_conflict(self, high_level_node):
         paths = high_level_node.solutions
@@ -296,10 +313,15 @@ if __name__ == '__main__':
     )
 
     start_time = time.time()
-    makespan, sum_of_costs, solutions = st_cbs.planning()
+    space_makespan, sum_of_space_costs, time_makespan, sum_of_time_costs, space_time_makespan, sum_of_space_time_costs, solutions = st_cbs.planning()
     print("Time: ", time.time() - start_time)
-    print("Sum of costs: ", sum_of_costs)
-    print("Makespan: ", makespan)
+    print("Space Makespan: ", space_makespan)
+    print("Sum of Space Costs: ", sum_of_space_costs)
+    print("Time Makespan: ", time_makespan)
+    print("Sum of Time Costs: ", sum_of_time_costs)
+    print("Space-Time Makespan: ", space_time_makespan)
+    print("Sum of Space-Time Costs: ", sum_of_space_time_costs)
+
     for solution in solutions:
         for node in solution:
             print(f"[{node.x}, {node.y}, {node.t}],")
