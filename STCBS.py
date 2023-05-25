@@ -64,8 +64,8 @@ class STCBS:
         self.neighbor_radius = neighbor_radius
         self.max_iter = max_iter
 
-        self.fig = plt.figure(figsize=(10, 10))
-        self.ax = self.fig.add_subplot(111, projection='3d')
+        # self.fig = plt.figure(figsize=(10, 10))
+        # self.ax = self.fig.add_subplot(111, projection='3d')
         self.animation = False
         self.draw_result = False
 
