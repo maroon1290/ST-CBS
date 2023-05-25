@@ -16,7 +16,7 @@ if __name__ == '__main__':
     solutions_list = []
     compute_time_list = []
     for i in range(count):
-        config_name = f"NarrowEnvironment_{i}"
+        config_name = f"OpenEnvironment_5_{i}"
         # read config.yaml
         with open(os.path.join("configs", config_name + ".yaml"), "r") as file:
             config = yaml.safe_load(file)
@@ -91,13 +91,13 @@ if __name__ == '__main__':
                     solutions_list.append(solution_list)
                 yaml.dump(solutions_list, file)
 
-            space_makespan_list.append(space_makespan)
-            sum_of_space_costs_list.append(sum_of_space_costs)
-            time_makespan_list.append(time_makespan)
-            sum_of_time_costs_list.append(sum_of_time_costs)
-            space_time_makespan_list.append(space_time_makespan)
-            sum_of_space_time_costs_list.append(sum_of_space_time_costs)
-            compute_time_list.append(compute_time)
+        space_makespan_list.append(space_makespan)
+        sum_of_space_costs_list.append(sum_of_space_costs)
+        time_makespan_list.append(time_makespan)
+        sum_of_time_costs_list.append(sum_of_time_costs)
+        space_time_makespan_list.append(space_time_makespan)
+        sum_of_space_time_costs_list.append(sum_of_space_time_costs)
+        compute_time_list.append(compute_time)
 
     # save makespan and sum of costs to yaml
     with open(f"solutions/{config_name}_raw_data.csv", "w") as file:
