@@ -20,7 +20,7 @@ def interpolate(p1, p2, t1, t2, t):
 
 
 if __name__ == '__main__':
-    basename = "OpenEnvironment_20_7"
+    basename = "OpenEnvironment_15_1"
     # read paths from yaml
     with open(f'solutions/{basename}_solutions.yaml', 'r') as f:
         paths = yaml.load(f, Loader=yaml.FullLoader)
@@ -39,6 +39,7 @@ if __name__ == '__main__':
         y_list.append(y)
         t_list.append(t)
 
+    config["robot_radii"] = [radius - 0.05 for radius in config["robot_radii"]]
     # 원형 장애물 리스트 (x, y, r)
     circle_obstacles = []
     rectangle_obstacles = []
@@ -164,7 +165,7 @@ if __name__ == '__main__':
             x1, y1 = robots[i].center
             x2, y2 = robots[j].center
             distance = euclidean_distance((x1, y1), (x2, y2))
-            if distance < config['robot_radii'][i] + config['robot_radii'][j] - 0.1:
+            if distance < config['robot_radii'][i] + config['robot_radii'][j]:
                 print(f"Robot {i} collided with robot {j}!")
 
         # 시간 텍스트 갱신
@@ -175,6 +176,6 @@ if __name__ == '__main__':
 
     # 애니메이션 설정
     max_time = max(max(t) for t in t_list)
-    ani = FuncAnimation(fig, update, frames=np.arange(0, max_time + 0.01, 0.005), blit=True, interval=1, repeat=False)
+    ani = FuncAnimation(fig, update, frames=np.arange(0, max_time + 0.01, 0.01), blit=True, interval=1, repeat=False)
 
     plt.show()
