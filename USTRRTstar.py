@@ -3,12 +3,13 @@ import random
 import time
 from abc import *
 from collections import deque
+from shapely.geometry import Point, box
 
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import numpy as np
 
-# from mpl_toolkits.mplot3d import Axes3D
-# from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 # fig = plt.figure(figsize=(10, 10))
 # ax = fig.add_subplot(111, projection='3d')
@@ -38,8 +39,8 @@ class Node:
 
 
 def linear_interpolate(from_node, to_node, radius):
-    dx = from_node.x - to_node.x
-    dy = from_node.y - to_node.y
+    dx = to_node.x - from_node.x
+    dy = to_node.y - from_node.y
     d = math.hypot(dx, dy)
     theta = math.atan2(dy, dx)
     interpolated_x = [from_node.x]
@@ -87,13 +88,13 @@ class RectangleObstacle(ObstacleBase):
     def is_collide(self, from_node, to_node, radius):
         x, y = linear_interpolate(from_node, to_node, radius)
         for i in range(len(x)):
-            if (x[i] + radius < self.x - self.width / 2) or \
-                    (x[i] - radius > self.x + self.width / 2) or \
-                    (y[i] + radius < self.y - self.height / 2) or \
-                    (y[i] - radius > self.y + self.height / 2):
-                continue
-            else:
+            circle = Point(x[i], y[i]).buffer(radius)
+            rectangle = box(self.x - self.width / 2.0, self.y - self.height / 2.0, self.x + self.width / 2.0,
+                            self.y + self.height / 2.0)
+
+            if rectangle.intersects(circle):
                 return True
+        return False
 
 
 class USTRRRTstar:
@@ -153,7 +154,7 @@ class USTRRRTstar:
                 if new_node.t + 1 > self.max_time:
                     self.max_time = new_node.t + 1
 
-                if self.animation and i % 10 == 0:
+                if self.animation:
                     self.draw_nodes_edge_3d_graph()
 
                 if self.is_near_goal(new_node):
@@ -233,7 +234,7 @@ class USTRRRTstar:
             if new_node.t - nearby_node.t != 1:
                 continue
             potential_cost = nearby_node.space_time_cost + self.get_space_time_distance(new_node, nearby_node)
-            if potential_cost < new_node.space_time_cost and self.is_collide(new_node, nearby_node, self.obstacles):
+            if potential_cost < new_node.space_time_cost and not self.is_collide(new_node, nearby_node, self.obstacles):
                 new_node.parent = nearby_node
                 new_node.space_time_cost = potential_cost
         new_node.parent.children.append(new_node)
@@ -247,7 +248,7 @@ class USTRRRTstar:
             if nearby_node.t - new_node.t != 1:
                 continue
             potential_cost = nearby_node.space_time_cost + self.get_space_time_distance(new_node, nearby_node)
-            if potential_cost < nearby_node.space_time_cost and self.is_collide(new_node, nearby_node, self.obstacles):
+            if potential_cost < nearby_node.space_time_cost and not self.is_collide(new_node, nearby_node, self.obstacles):
                 nearby_node.parent.children.remove(nearby_node)
                 nearby_node.parent = new_node
                 nearby_node.space_time_cost = potential_cost
@@ -309,9 +310,6 @@ class USTRRRTstar:
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('T')
-        ax.set_yticklabels([])
-        ax.set_xticklabels([])
-        ax.set_zticklabels([])
         ax.set_title('Low Level of MARRF')
         for node in self.node_list:
             if node.parent is not None:
@@ -348,9 +346,6 @@ class USTRRRTstar:
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('T')
-        ax.set_yticklabels([])
-        ax.set_xticklabels([])
-        ax.set_zticklabels([])
         ax.set_title('Low Level of MARRF')
         for node in path:
             if node.parent is not None:
@@ -379,13 +374,15 @@ class USTRRRTstar:
 
 
 if __name__ == '__main__':
-    start = (2, 10)
-    goal = (18, 10)
+    start = [1, 2.5]
+    goal = [4, 2.5]
     obstacles = [
-        CircleObstacle(10, 10, 5),
+        RectangleObstacle(1, 4, 2, 2),
+        RectangleObstacle(4, 4, 2, 2),
+        RectangleObstacle(2.5, 1, 5, 2),
     ]
-    space_time_rrt = USTRRRTstar(start=start, goal=goal, width=20.0, height=20.0, robot_radius=1.5,
-                                  lambda_factor=0.5, expand_dis=3.0, obstacles=obstacles, near_radius=5.0, max_iter=500)
+    space_time_rrt = USTRRRTstar(start=start, goal=goal, width=5.0, height=5.0, robot_radius=0.4,
+                                  lambda_factor=0.5, expand_dis=0.5, obstacles=obstacles, near_radius=5.0, max_iter=500)
     space_cost, space_time_cost, path = space_time_rrt.planning()
     for node in path:
         print(node.x, node.y, node.t)

@@ -3,15 +3,16 @@
 import heapq
 import math
 import os
+import time
 from copy import deepcopy
 from itertools import combinations
 
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import numpy as np
 import yaml
 
-# from mpl_toolkits.mplot3d import Axes3D
-# from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 from USTRRTstar import USTRRRTstar, CircleObstacle, RectangleObstacle
 
@@ -263,7 +264,7 @@ class STCBS:
 
 
 if __name__ == '__main__':
-    config_name = "OpenEnvironment_2"
+    config_name = "NarrowEnvironment_0"
     # read config.yaml
     with open(os.path.join("configs", config_name + ".yaml"), "r") as file:
         config = yaml.safe_load(file)
@@ -294,7 +295,9 @@ if __name__ == '__main__':
         config["max_iter"]
     )
 
+    start_time = time.time()
     makespan, sum_of_costs, solutions = st_cbs.planning()
+    print("Time: ", time.time() - start_time)
     print("Sum of costs: ", sum_of_costs)
     print("Makespan: ", makespan)
     for solution in solutions:

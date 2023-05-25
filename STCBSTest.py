@@ -6,12 +6,12 @@ import multiprocessing
 
 
 if __name__ == '__main__':
-    count = 10
+    count = 20
     makespan_list = []
     sum_of_costs_list = []
     compute_time_list = []
     for i in range(count):
-        config_name = f"OpenEnvironment_15_{i}"
+        config_name = f"NarrowEnvironment_{i}"
         # read config.yaml
         with open(os.path.join("configs", config_name + ".yaml"), "r") as file:
             config = yaml.safe_load(file)
@@ -86,5 +86,5 @@ if __name__ == '__main__':
 
     # save makespan and sum of costs to yaml
     with open(f"solutions/{config_name}_raw_data.csv", "w") as file:
-        for i in range(count):
-            file.write(f"{makespan_list[i]}, {sum_of_costs_list[i]}, {compute_time_list[i]} \n")
+        for makespan, sum_of_costs, compute_time in zip(makespan_list, sum_of_costs_list, compute_time_list):
+            file.write(f"{makespan}, {sum_of_costs}, {compute_time} \n")

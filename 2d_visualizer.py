@@ -28,7 +28,7 @@ def interpolate(x1, x2, y1, y2, time_step):
         return x1 + time_step * math.cos(theta), y1 + time_step * math.sin(theta)
 
 if __name__ == '__main__':
-    basename = "OpenEnvironment_15_1"
+    basename = "NarrowEnvironment_0"
     # read paths from yaml
     with open(f'solutions/{basename}_solutions.yaml', 'r') as f:
         paths = yaml.load(f, Loader=yaml.FullLoader)
@@ -140,7 +140,7 @@ if __name__ == '__main__':
         return False
     x_poses = [x_list[i][0] for i in range(robot_num)]
     y_poses = [y_list[i][0] for i in range(robot_num)]
-    time_step = 5 / 100
+    time_step = config["expand_distances"][0] / 100
     def update(frame):
         current_time = frame
         # 시작 위치와 도착 위치 표시
