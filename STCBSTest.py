@@ -6,7 +6,7 @@ import multiprocessing
 
 
 if __name__ == '__main__':
-    name_list = ["OpenEnvironment_15", "OpenEnvironment_20", "CluttedEnvironment_10", "CluttedEnvironment_15", "CluttedEnvironment_20"]
+    name_list = ["OpenEnvironment_20"]
     for name in name_list:
         count = 10
         space_makespan_list = []
