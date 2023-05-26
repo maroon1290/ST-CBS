@@ -1,0 +1,11 @@
+space_makespan, sum_of_space_costs, time_makespan, sum_of_time_costs, space_time_makespan, sum_of_space_time_costs, compute_time 
+None, None, None, None, None, None, None
+None, None, None, None, None, None, None
+None, None, None, None, None, None, None
+None, None, None, None, None, None, None
+28.350530856548243, 284.4036998372387, 6, 70, 17.175265428274123, 177.2018499186194, 28.946367740631104
+None, None, None, None, None, None, None
+None, None, None, None, None, None, None
+None, None, None, None, None, None, None
+30.776548189587746, 311.9790223934118, 7, 77, 18.88827409479387, 194.48951119670588, 23.457512378692627
+None, None, None, None, None, None, None
