@@ -1,3 +1,3 @@
 import math
 
-print(math.hypot(26.4 - 26.8, 2.05 - 2.32))
+print(math.hypot(9.14 - 8.9, 25.87 - 26.86))
