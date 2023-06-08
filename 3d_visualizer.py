@@ -4,6 +4,7 @@ import matplotlib.cm as cm
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import numpy as np
 import yaml
+from matplotlib.animation import FuncAnimation
 
 # Your multi agent plan
 
@@ -40,10 +41,10 @@ def create_cube(center_x, center_y, width, height, depth):
 
     return faces
 
-with open('configs/NarrowSpecialEnvironment.yaml') as f:
+with open('configs/CluttedEnvironment_20_1.yaml') as f:
     config = yaml.safe_load(f)
 
-with open('solutions/NarrowSpecialEnvironment_solutions.yaml') as f:
+with open('solutions/CluttedEnvironment_20_1_solutions.yaml') as f:
     plan = yaml.safe_load(f)
 
 # Number of agents
@@ -97,7 +98,7 @@ for i, agent_plan in enumerate(plan):
 
 # Configure plot
 # camera angle
-ax.view_init(45, -45)
+ax.view_init(90, 0)
 
 # ax.set_title('Space-Time Path of Multiple Agents')
 ax.set_xlabel('X')
@@ -107,10 +108,9 @@ ax.set_xticklabels([])
 ax.set_yticklabels([])
 ax.set_zticklabels([])
 # set width
-ax.set_xlim(0, 5)
+ax.set_xlim(0, 30)
 # set height
-ax.set_ylim(0, 5)
-ax.legend()
-
+ax.set_ylim(0, 30)
 # Show plot
+
 plt.show()

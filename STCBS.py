@@ -284,11 +284,11 @@ class STCBS:
 
 
 if __name__ == '__main__':
-    config_name = "OpenEnvironment_5_0"
+    config_name = "OpenEnvironment_10_2"
     # read config.yaml
     with open(os.path.join("configs", config_name + ".yaml"), "r") as file:
         config = yaml.safe_load(file)
-
+    print(config["lambda_factor"])
     # make obstacles
     obstacles = []
     for config_obstacle in config["obstacles"]:
@@ -324,6 +324,7 @@ if __name__ == '__main__':
     print("Sum of Time Costs: ", sum_of_time_costs)
     print("Space-Time Makespan: ", space_time_makespan)
     print("Sum of Space-Time Costs: ", sum_of_space_time_costs)
+    print(str(space_makespan) + ", " + str(sum_of_space_costs) + ", " + str(time_makespan) + ", " + str(sum_of_time_costs) + ", " + str(space_time_makespan) + ", " + str(sum_of_space_time_costs) + ", " + str(time.time() - start_time))
 
     for solution in solutions:
         for node in solution:

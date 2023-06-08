@@ -88,15 +88,15 @@ for obstacle in obstacles:
 
 colors = ['r', 'b']
 # plan[0] = plan[0][:5]
-# plan[1] = plan[1][:5]
-scatter_colors = [['black'] * 4 + ['r'] + ['black'] * 3, ['black'] * 4 + ['b'] + ['black'] * 3]
+plan[1] = plan[1][:5]
+scatter_colors = [['black'] * 4 + ['r'] + ['black'] * 3, ['black'] * 4 + ['b']]
 # Plot each agent's plan
 for i, agent_plan in enumerate(plan):
     # Unpack coordinates and time
     x_coords, y_coords, time_steps = zip(*agent_plan)
 
     # Plot this agent's plan
-    ax.scatter(x_coords, y_coords, time_steps, color=scatter_colors[i], alpha=0.5, s=5000)
+    ax.scatter(x_coords, y_coords, time_steps, color=scatter_colors[i], alpha=0.5, s=500)
     if i == 0:
         ax.plot(x_coords, y_coords, time_steps, color=colors[i], label='Agent i')
     else:

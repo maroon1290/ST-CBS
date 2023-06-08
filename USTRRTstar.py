@@ -139,6 +139,14 @@ class USTRRRTstar:
             nearest_node = self.get_nearest_node(rand_node)
             new_node = self.steer(nearest_node, rand_node)
 
+            # check if new node is out of width and height
+            right_of_new_node = new_node.x + self.robot_radius
+            left_of_new_node = new_node.x - self.robot_radius
+            top_of_new_node = new_node.y + self.robot_radius
+            bottom_of_new_node = new_node.y - self.robot_radius
+            if right_of_new_node > self.width or left_of_new_node < 0 or top_of_new_node > self.height or bottom_of_new_node < 0:
+                continue
+
             # check collision
             if not self.is_collide(nearest_node, new_node, self.obstacles):
                 # connect new node to tree
@@ -390,7 +398,7 @@ if __name__ == '__main__':
     ]
     space_time_rrt = USTRRRTstar(start=start, goal=goal, width=5.0, height=5.0, robot_radius=0.4,
                                   lambda_factor=0.5, expand_dis=0.5, obstacles=obstacles, near_radius=5.0, max_iter=500)
-    space_cost, space_time_cost, path = space_time_rrt.planning()
+    space_cost, time_cost, space_time_cost, path = space_time_rrt.planning()
     for node in path:
         print(node.x, node.y, node.t)
-    print(space_cost, space_time_cost)
+    print(space_cost, time_cost, space_time_cost)
