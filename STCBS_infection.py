@@ -120,6 +120,8 @@ class STCBS:
                 conflict_node = list(filter(lambda node: node.key == key,
                                             new_high_level_node.trees[robot].node_list))[0]
 
+                new_high_level_node.trees[robot].max_iter /= 2
+
                 to_be_removed = []
                 for node in new_high_level_node.trees[robot].node_list:
                     if node == conflict_node:
@@ -128,7 +130,10 @@ class STCBS:
                     if node.t == conflict_node.t and node.space_distance(conflict_node) < self.robot_radii[robot] * 2:
                         to_be_removed.append(node)
 
-                new_high_level_node.trees[robot].max_iter /= 2
+                while to_be_removed:
+                    node = to_be_removed.pop()
+                    self.prune_children(node, new_high_level_node.trees[robot].node_list)
+
                 while conflict_node.children:
                     child = conflict_node.children.popleft()
                     self.prune_children(child, new_high_level_node.trees[robot].node_list)
@@ -155,15 +160,6 @@ class STCBS:
 
         if node in node_list:
             node_list.remove(node)
-
-        # if prune_node.is_valid is False:
-        #     return
-        # while prune_node.children:
-        #     child = prune_node.children.popleft()
-        #     self.prune_children(tree, child)
-        # prune_node.is_valid = False
-        # tree.node_list.remove(prune_node)
-        # del prune_node
 
     def planning_all_space_time_rrts(self, trees):
         space_costs = []
@@ -293,7 +289,7 @@ class STCBS:
 
 
 if __name__ == '__main__':
-    config_name = "OpenEnvironment_10_1"
+    config_name = "deadlock"
     # read config.yaml
     with open(os.path.join("configs", config_name + ".yaml"), "r") as file:
         config = yaml.safe_load(file)

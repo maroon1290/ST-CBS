@@ -26,7 +26,7 @@ def interpolate(x1, x2, y1, y2, time_step):
 
 
 if __name__ == '__main__':
-    basename = "CluttedEnvironment_20_1"
+    basename = "deadlock"
     # read paths from yaml
     with open(f'solutions/{basename}_solutions.yaml', 'r') as f:
         paths = yaml.load(f, Loader=yaml.FullLoader)
@@ -169,9 +169,6 @@ if __name__ == '__main__':
 
         # 시간 텍스트 갱신
         time_text.set_text(f'Time: {current_time:.2f}')
-
-        if frame == 0:
-            time.sleep(2)
 
         return robots + path_lines + [time_text]
 

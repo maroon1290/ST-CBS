@@ -11,9 +11,9 @@ import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
-# fig = plt.figure(figsize=(10, 10))
-# ax = fig.add_subplot(111, projection='3d')
-# ax.view_init(elev=30., azim=120)
+fig = plt.figure(figsize=(10, 10))
+ax = fig.add_subplot(111, projection='3d')
+ax.view_init(elev=30., azim=120)
 
 
 class Node:
@@ -124,7 +124,7 @@ class USTRRRTstar:
         self.last_node = None
 
         # set figure
-        self.animation = False
+        self.animation = True
         self.draw_result = False
 
     def planning(self):
@@ -145,6 +145,19 @@ class USTRRRTstar:
             top_of_new_node = new_node.y + self.robot_radius
             bottom_of_new_node = new_node.y - self.robot_radius
             if right_of_new_node > self.width or left_of_new_node < 0 or top_of_new_node > self.height or bottom_of_new_node < 0:
+                continue
+
+            invalid_flag = False
+            # check collide with invalid nodes
+            for invalid_node in self.node_list:
+                if invalid_node.is_valid:
+                    continue
+
+                if invalid_node.t == new_node.t and invalid_node.space_distance(new_node) <= self.robot_radius * 2:
+                    invalid_flag = True
+                    break
+
+            if invalid_flag:
                 continue
 
             # check collision
@@ -202,7 +215,7 @@ class USTRRRTstar:
         return Node(
             np.random.uniform(0, self.width),
             np.random.uniform(0, self.height),
-            np.random.uniform(1, self.max_time))
+            np.random.uniform(0, self.max_time))
 
     def get_nearest_node(self, rand_node):
         return min(self.node_list, key=lambda node: self.get_space_time_distance(rand_node, node) if (rand_node.t > node.t and node.is_valid) else float('inf'))
