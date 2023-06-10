@@ -260,7 +260,7 @@ class STCBS:
         self.ax.set_yticklabels([])
         self.ax.set_xticklabels([])
         self.ax.set_zticklabels([])
-        self.ax.set_title('High Level of MARRF')
+        self.ax.set_title('High Level of ST-CBS')
         for path in paths:
             x = [node.x for node in path]
             y = [node.y for node in path]
@@ -300,7 +300,7 @@ if __name__ == '__main__':
             raise ValueError("invalid obstacle type")
         obstacles.append(obstacle)
 
-    # run MARRF
+    # run ST-CBS
     st_cbs = STCBS(
         config["starts"],
         config["goals"],

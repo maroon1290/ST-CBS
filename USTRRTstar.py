@@ -338,7 +338,7 @@ class USTRRRTstar:
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('T')
-        ax.set_title('Low Level of MARRF')
+        ax.set_title('Low Level of ST-CBS')
         for node in self.node_list:
             if node.parent is not None:
                 x = [node.x, node.parent.x]
@@ -362,7 +362,7 @@ class USTRRRTstar:
             # Rectangle Obstacle
             if type(obstacle) == RectangleObstacle:
                 cube_faces = self.create_cube(obstacle.x, obstacle.y, obstacle.width, obstacle.height, self.max_time)
-                face_collection = Poly3DCollection(cube_faces, facecolor='b', alpha=0.1, linewidths=1, edgecolors='k')
+                face_collection = Poly3DCollection(cube_faces, facecolor='b', alpha=0.01, linewidths=1, edgecolors='k')
                 ax.add_collection3d(face_collection)
         plt.pause(0.1)
 
@@ -374,7 +374,7 @@ class USTRRRTstar:
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('T')
-        ax.set_title('Low Level of MARRF')
+        ax.set_title('Low Level of ST-CBS')
         for node in path:
             if node.parent is not None:
                 x = [node.x, node.parent.x]

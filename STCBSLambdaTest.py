@@ -45,7 +45,7 @@ if __name__ == '__main__':
                     raise ValueError("invalid obstacle type")
                 obstacles.append(obstacle)
 
-            # run MARRF
+            # run ST-CBS
             st_cbs = STCBS(
                 config["starts"],
                 config["goals"],
