@@ -20,7 +20,7 @@ class USTRRRTstar:
                  start_point: list,
                  goal_point: list,
                  dimension: int,
-                 space_limit: list,
+                 space_limits: list,
                  obstalces: list,
                  robot_radius: float,
                  lambda_factor: float,
@@ -30,7 +30,7 @@ class USTRRRTstar:
         self.start_point = start_point
         self.goal_point = goal_point
         self.dimension = dimension
-        self.space_limit = space_limit
+        self.space_limits = space_limits
         self.obstacles = obstalces
         self.robot_radius = robot_radius
         self.lambda_factor = lambda_factor
@@ -71,7 +71,7 @@ class USTRRRTstar:
             # check new node in area
             in_area_flag = True
             for j in range(self.dimension):
-                if new_node.config_point[j] + self.robot_radius > self.space_limit[j] or \
+                if new_node.config_point[j] + self.robot_radius > self.space_limits[j] or \
                         new_node.config_point[j] - self.robot_radius < 0:
                     in_area_flag = False
             if in_area_flag is False:
@@ -148,7 +148,7 @@ class USTRRRTstar:
     def get_random_state(self):
         random_vector = list()
         for i in range(self.dimension):
-            random_vector.append(random.uniform(0, self.space_limit[i]))
+            random_vector.append(random.uniform(0, self.space_limits[i]))
         random_time = random.randint(1, self.max_time)
         return random_vector, random_time
 
@@ -301,8 +301,8 @@ class USTRRRTstar:
 
     def draw_nodes_edge_3d_graph(self):
         ax.cla()
-        ax.set_xlim3d(0, self.space_limit[0])
-        ax.set_ylim3d(0, self.space_limit[1])
+        ax.set_xlim3d(0, self.space_limits[0])
+        ax.set_ylim3d(0, self.space_limits[1])
         ax.set_zlim3d(0, self.max_time)
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
@@ -331,8 +331,8 @@ class USTRRRTstar:
 
     def draw_path_3d_graph(self, path):
         ax.cla()
-        ax.set_xlim3d(0, self.space_limit[0])
-        ax.set_ylim3d(0, self.space_limit[1])
+        ax.set_xlim3d(0, self.space_limits[0])
+        ax.set_ylim3d(0, self.space_limits[1])
         ax.set_zlim3d(0, self.max_time)
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
@@ -364,7 +364,7 @@ if __name__ == '__main__':
         start_point=[2, 2],
         goal_point=[8, 8],
         dimension=2,
-        space_limit=[10, 10],
+        space_limits=[10, 10],
         obstalces=[
             RectangleObstacle(5, 5, 2, 2),
         ],
