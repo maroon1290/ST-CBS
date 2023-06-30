@@ -6,7 +6,7 @@ class Node:
         self.config_point = config_point
         self.time = time
         self.parent = None
-        self.children = set()
+        self.children = list()
         self.is_invalid = False
         self.is_conflict = False
         self.space_cost = float("inf")
@@ -14,7 +14,7 @@ class Node:
         self.space_time_cost = float("inf")
 
     def add_child(self, child: Node):
-        self.children.add(child)
+        self.children.append(child)
 
     def remove_child(self, child: Node):
         self.children.remove(child)
