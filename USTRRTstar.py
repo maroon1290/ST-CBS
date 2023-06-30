@@ -49,6 +49,7 @@ class USTRRRTstar:
         self.start_node.space_cost = 0
         self.start_node.time_cost = 0
         self.start_node.space_time_cost = 0
+        self.node_list.append(self.start_node)
         self.goal_node = Node(goal_point, -1)
         self.last_node = None
 
@@ -119,6 +120,9 @@ class USTRRRTstar:
                     break
 
         path = self.generate_path()
+        self.space_cost = self.last_node.space_cost
+        self.time_cost = self.last_node.time_cost
+        self.space_time_cost = self.last_node.space_time_cost
         if self.draw_result:
             self.draw_path_3d_graph(path)
         return path
@@ -201,7 +205,7 @@ class USTRRRTstar:
             space_distance = Utils.calculate_space_distance(center_node, node)
             space_time_distance = Utils.calculate_space_time_distance(center_node, node, self.lambda_factor)
 
-            if space_time_distance <= self.neighbor_radius and space_distance <= self.max_expand_dis:
+            if space_time_distance <= self.neighbor_radius and space_distance <= self.max_expand_dis + 0.01:
                 lower_neighbor_nodes.append(node)
 
         return lower_neighbor_nodes
@@ -218,7 +222,7 @@ class USTRRRTstar:
             space_distance = Utils.calculate_space_distance(center_node, node)
             space_time_distance = Utils.calculate_space_time_distance(center_node, node, self.lambda_factor)
 
-            if space_time_distance <= self.neighbor_radius and space_distance <= self.max_expand_dis:
+            if space_time_distance <= self.neighbor_radius and space_distance <= self.max_expand_dis + 0.01:
                 higher_neighbor_nodes.append(node)
 
         return higher_neighbor_nodes
@@ -258,6 +262,7 @@ class USTRRRTstar:
                                                                                                     higher_neighbor_node)
                 higher_neighbor_node.space_time_cost = new_space_time_cost
 
+    # TODO : Implemented
     def generate_path(self):
         path = []
         current_node = self.last_node
@@ -295,8 +300,8 @@ class USTRRRTstar:
 
     def draw_nodes_edge_3d_graph(self):
         ax.cla()
-        ax.set_xlim3d(0, self.width)
-        ax.set_ylim3d(0, self.height)
+        ax.set_xlim3d(0, self.space_limit[0])
+        ax.set_ylim3d(0, self.space_limit[1])
         ax.set_zlim3d(0, self.max_time)
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
@@ -304,27 +309,18 @@ class USTRRRTstar:
         ax.set_title('Low Level of ST-CBS')
         for node in self.node_list:
             if node.parent is not None:
-                x = [node.x, node.parent.x]
-                y = [node.y, node.parent.y]
-                z = [node.t, node.parent.t]
-                if node.is_valid is False:
+                x = [node.config_point[0], node.parent.config_point[0]]
+                y = [node.config_point[1], node.parent.config_point[1]]
+                z = [node.time, node.parent.time]
+                if node.is_invalid:
                     ax.plot(x, y, z, color='red')
-                elif node.is_infected:
-                    print("blue")
+                elif node.is_conflict:
                     ax.plot(x, y, z, color='blue')
                 else:
                     ax.plot(x, y, z, color='black')
-        ax.scatter(self.start.x, self.start.y, self.start.t, color='green')
-        ax.scatter(self.goal.x, self.goal.y, self.goal.t, color='red')
+        ax.scatter(self.start_node.config_point[0], self.start_node.config_point[1], self.start_node.time, color='green')
+        ax.scatter(self.goal_node.config_point[0], self.goal_node.config_point[1], self.goal_node.time, color='red')
         for obstacle in self.obstacles:
-            # Circle Obstacle
-            if type(obstacle) == CircleObstacle:
-                u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
-                x = obstacle.x + obstacle.r * np.cos(u) * np.sin(v)
-                y = obstacle.y + obstacle.r * np.sin(u) * np.sin(v)
-                z = obstacle.r * np.cos(v)
-                ax.plot_wireframe(x, y, z, color="blue")
-
             # Rectangle Obstacle
             if type(obstacle) == RectangleObstacle:
                 cube_faces = self.create_cube(obstacle.x, obstacle.y, obstacle.width, obstacle.height, self.max_time)
@@ -334,8 +330,8 @@ class USTRRRTstar:
 
     def draw_path_3d_graph(self, path):
         ax.cla()
-        ax.set_xlim3d(0, self.width)
-        ax.set_ylim3d(0, self.height)
+        ax.set_xlim3d(0, self.space_limit[0])
+        ax.set_ylim3d(0, self.space_limit[1])
         ax.set_zlim3d(0, self.max_time)
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
@@ -350,14 +346,6 @@ class USTRRRTstar:
         ax.scatter(path[0].x, path[0].y, path[0].t, color='green')
         ax.scatter(path[-1].x, path[-1].y, path[-1].t, color='red')
         for obstacle in self.obstacles:
-            # Circle Obstacle
-            if type(obstacle) == CircleObstacle:
-                u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
-                x = obstacle.x + obstacle.r * np.cos(u) * np.sin(v)
-                y = obstacle.y + obstacle.r * np.sin(u) * np.sin(v)
-                z = obstacle.r * np.cos(v)
-                ax.plot_wireframe(x, y, z, color="blue")
-
             # Rectangle Obstacle
             if type(obstacle) == RectangleObstacle:
                 cube_faces = self.create_cube(obstacle.x, obstacle.y, obstacle.width, obstacle.height, self.max_time)
@@ -368,16 +356,28 @@ class USTRRRTstar:
 
 
 if __name__ == '__main__':
-    start = [2, 2]
-    goal = [8, 8]
     obstacles = [
         RectangleObstacle(5, 5, 2, 2),
     ]
-    space_time_rrt = USTRRRTstar(start=start, goal=goal, width=10.0, height=10.0, robot_radius=1,
-                                 lambda_factor=0.5, expand_dis=3, obstacles=obstacles, near_radius=3.0, max_iter=500)
-    start_time = time.time()
-    space_cost, time_cost, space_time_cost, path = space_time_rrt.planning()
-    print(f"Time cost: {time.time() - start_time}s")
+    space_time_rrt = USTRRRTstar(
+        start_point=[2, 2],
+        goal_point=[8, 8],
+        dimension=2,
+        space_limit=[10, 10],
+        obstalces=[
+            RectangleObstacle(5, 5, 2, 2),
+        ],
+        robot_radius=1.0,
+        lambda_factor=0.5,
+        max_expand_dis=3,
+        neighbor_radius=5,
+        max_iter=500,
+    )
+    path = space_time_rrt.planning()
+    print("space cost : ", space_time_rrt.space_cost)
+    print("time cost : ", space_time_rrt.time_cost)
+    print("space time cost : ", space_time_rrt.space_time_cost)
+    print("path : ")
     for node in path:
-        print(node.x, node.y, node.t)
-    print(space_cost, time_cost, space_time_cost)
+        print(f"x: {node.config_point[0]}, y: {node.config_point[1]}, t: {node.time}")
+
