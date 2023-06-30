@@ -122,21 +122,24 @@ class STCBS:
 
                 new_high_level_node.trees[robot].max_iter /= 2
 
-                to_be_removed = []
+                infection_nodes = []
                 for node in new_high_level_node.trees[robot].node_list:
                     if node == conflict_node:
                         continue
 
                     if node.t == conflict_node.t and node.space_distance(conflict_node) < self.robot_radii[robot] * 2:
-                        to_be_removed.append(node)
+                        node.is_infected = True
+                        infection_nodes.append(node)
 
-                while to_be_removed:
-                    node = to_be_removed.pop()
-                    self.prune_children(node, new_high_level_node.trees[robot].node_list)
+                for infection_node in infection_nodes:
+                    while infection_node.children:
+                        child = infection_node.children.popleft()
+                        self.prune_children(child, new_high_level_node.trees[robot].node_list)
 
                 while conflict_node.children:
                     child = conflict_node.children.popleft()
                     self.prune_children(child, new_high_level_node.trees[robot].node_list)
+
                 conflict_node.is_valid = False
                 space_cost, time_cost, space_time_cost, solution = new_high_level_node.trees[robot].planning()
                 new_high_level_node.space_costs[robot] = space_cost
@@ -289,7 +292,7 @@ class STCBS:
 
 
 if __name__ == '__main__':
-    config_name = "deadlock"
+    config_name = "CluttedEnvironment_5_0"
     # read config.yaml
     with open(os.path.join("configs", config_name + ".yaml"), "r") as file:
         config = yaml.safe_load(file)

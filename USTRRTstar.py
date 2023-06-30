@@ -24,6 +24,7 @@ class Node:
         self.parent = parent
         self.children = deque()
         self.is_valid = True
+        self.is_infected = False
         self.space_time_cost = None
         self.key = self.generate_key(x, y, t)
 
@@ -153,7 +154,7 @@ class USTRRRTstar:
                 if invalid_node.is_valid:
                     continue
 
-                if invalid_node.t == new_node.t and invalid_node.space_distance(new_node) <= self.robot_radius * 2:
+                if invalid_node.t == new_node.t and invalid_node.space_distance(new_node) <= self.robot_radius:
                     invalid_flag = True
                     break
 
@@ -218,7 +219,7 @@ class USTRRRTstar:
             np.random.uniform(0, self.max_time))
 
     def get_nearest_node(self, rand_node):
-        return min(self.node_list, key=lambda node: self.get_space_time_distance(rand_node, node) if (rand_node.t > node.t and node.is_valid) else float('inf'))
+        return min(self.node_list, key=lambda node: self.get_space_time_distance(rand_node, node) if (rand_node.t > node.t and node.is_valid and not node.is_infected) else float('inf'))
 
     def steer(self, from_node: Node, to_node: Node):
         d = from_node.space_distance(to_node)
@@ -253,6 +254,8 @@ class USTRRRTstar:
                 continue
             if nearby_node.is_valid is False:
                 continue
+            if nearby_node.is_infected:
+                continue
             if new_node.t - nearby_node.t != 1:
                 continue
             potential_cost = nearby_node.space_time_cost + self.get_space_time_distance(new_node, nearby_node)
@@ -266,6 +269,8 @@ class USTRRRTstar:
             if nearby_node == new_node.parent:
                 continue
             if nearby_node.is_valid is False:
+                continue
+            if nearby_node.is_infected:
                 continue
             if nearby_node.t - new_node.t != 1:
                 continue
@@ -344,10 +349,13 @@ class USTRRRTstar:
                 x = [node.x, node.parent.x]
                 y = [node.y, node.parent.y]
                 z = [node.t, node.parent.t]
-                if node.is_valid:
-                    ax.plot(x, y, z, color='black')
-                else:
+                if node.is_valid is False:
                     ax.plot(x, y, z, color='red')
+                elif node.is_infected:
+                    print("blue")
+                    ax.plot(x, y, z, color='blue')
+                else:
+                    ax.plot(x, y, z, color='black')
         ax.scatter(self.start.x, self.start.y, self.start.t, color='green')
         ax.scatter(self.goal.x, self.goal.y, self.goal.t, color='red')
         for obstacle in self.obstacles:
@@ -402,16 +410,16 @@ class USTRRRTstar:
 
 
 if __name__ == '__main__':
-    start = [1, 2.5]
-    goal = [4, 2.5]
+    start = [2, 2]
+    goal = [8, 8]
     obstacles = [
-        RectangleObstacle(1, 4, 2, 2),
-        RectangleObstacle(4, 4, 2, 2),
-        RectangleObstacle(2.5, 1, 5, 2),
+        CircleObstacle(5, 5, 2),
     ]
-    space_time_rrt = USTRRRTstar(start=start, goal=goal, width=5.0, height=5.0, robot_radius=0.4,
-                                  lambda_factor=0.5, expand_dis=0.5, obstacles=obstacles, near_radius=5.0, max_iter=500)
+    space_time_rrt = USTRRRTstar(start=start, goal=goal, width=10.0, height=10.0, robot_radius=1,
+                                  lambda_factor=0.5, expand_dis=3, obstacles=obstacles, near_radius=3.0, max_iter=500)
+    start_time = time.time()
     space_cost, time_cost, space_time_cost, path = space_time_rrt.planning()
+    print(f"Time cost: {time.time() - start_time}s")
     for node in path:
         print(node.x, node.y, node.t)
     print(space_cost, time_cost, space_time_cost)
