@@ -55,7 +55,7 @@ class USTRRRTstar:
 
         # set figure
         self.animation = True
-        self.draw_result = False
+        self.draw_result = True
 
     def planning(self):
         self.last_node = None
@@ -115,9 +115,11 @@ class USTRRRTstar:
                     goal_node.space_time_cost = new_node.space_time_cost + \
                                                 Utils.calculate_space_time_distance(new_node, goal_node,
                                                                                     self.lambda_factor)
-                    self.node_list.append(goal_node)
-                    self.last_node = goal_node
-                    break
+                    if self.last_node is None or goal_node.space_time_cost < self.last_node.space_time_cost:
+                        if self.last_node is not None:
+                            self.node_list.remove(self.last_node)
+                        self.last_node = goal_node
+                        self.node_list.append(goal_node)
 
         path = self.generate_path()
         self.space_cost = self.last_node.space_cost
@@ -156,7 +158,7 @@ class USTRRRTstar:
         nearest_node = None
         min_space_time_distance = float("inf")
         for node in self.node_list:
-            if node.is_invalid:
+            if node.is_invalid or node == self.last_node:
                 continue
             if random_node.time <= node.time:
                 continue
@@ -197,7 +199,7 @@ class USTRRRTstar:
     def get_lower_neighbor_nodes(self, center_node):
         lower_neighbor_nodes = []
         for node in self.node_list:
-            if node.is_invalid:
+            if node.is_invalid or node == self.last_node:
                 continue
             if center_node.time - node.time != 1:
                 continue
@@ -214,7 +216,7 @@ class USTRRRTstar:
     def get_higher_neighbor_nodes(self, center_node):
         higher_neighbor_nodes = []
         for node in self.node_list:
-            if node.is_invalid:
+            if node.is_invalid or node == self.last_node:
                 continue
             if center_node.time - node.time != -1:
                 continue
@@ -339,12 +341,12 @@ class USTRRRTstar:
         ax.set_title('Low Level of ST-CBS')
         for node in path:
             if node.parent is not None:
-                x = [node.x, node.parent.x]
-                y = [node.y, node.parent.y]
-                z = [node.t, node.parent.t]
+                x = [node.config_point[0], node.parent.config_point[0]]
+                y = [node.config_point[1], node.parent.config_point[1]]
+                z = [node.time, node.parent.time]
                 ax.plot(x, y, z, color='red')
-        ax.scatter(path[0].x, path[0].y, path[0].t, color='green')
-        ax.scatter(path[-1].x, path[-1].y, path[-1].t, color='red')
+        ax.scatter(self.start_node.config_point[0], self.start_node.config_point[1], self.start_node.time, color='green')
+        ax.scatter(self.goal_node.config_point[0], self.goal_node.config_point[1], self.goal_node.time, color='red')
         for obstacle in self.obstacles:
             # Rectangle Obstacle
             if type(obstacle) == RectangleObstacle:
@@ -352,7 +354,7 @@ class USTRRRTstar:
                 face_collection = Poly3DCollection(cube_faces, facecolor='b', alpha=0.1, linewidths=1, edgecolors='k')
                 ax.add_collection3d(face_collection)
 
-        plt.pause(1)
+        plt.show()
 
 
 if __name__ == '__main__':
