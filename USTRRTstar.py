@@ -1,14 +1,13 @@
 import math
-import random
 import time
-from abc import *
-from collections import deque
-from shapely.geometry import Point, box
+import random
+
+from Node import Node
+from utils import Utils
+from RectangleObstacle import RectangleObstacle
 
 import matplotlib.pyplot as plt
 import numpy as np
-
-from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 fig = plt.figure(figsize=(10, 10))
@@ -16,112 +15,41 @@ ax = fig.add_subplot(111, projection='3d')
 ax.view_init(elev=30., azim=120)
 
 
-class Node:
-    def __init__(self, x, y, t=0, parent=None):
-        self.x = x
-        self.y = y
-        self.t = t
-        self.parent = parent
-        self.children = deque()
-        self.is_valid = True
-        self.is_infected = False
-        self.space_time_cost = None
-        self.key = self.generate_key(x, y, t)
-
-    @staticmethod
-    def generate_key(x, y, t):
-        return str(x) + '_' + str(y) + '_' + str(t)
-
-    def space_distance(self, other):
-        return math.hypot(other.x - self.x, other.y - self.y)
-
-    def time_distance(self, other):
-        return abs(other.t - self.t)
-
-
-def linear_interpolate(from_node, to_node, radius):
-    dx = to_node.x - from_node.x
-    dy = to_node.y - from_node.y
-    d = math.hypot(dx, dy)
-    theta = math.atan2(dy, dx)
-    interpolated_x = [from_node.x]
-    interpolated_y = [from_node.y]
-    n_expand = math.floor(d / radius)
-    for _ in range(n_expand):
-        interpolated_x.append(interpolated_x[-1] + radius * math.cos(theta))
-        interpolated_y.append(interpolated_y[-1] + radius * math.sin(theta))
-
-    d = math.hypot(to_node.x - interpolated_x[-1], to_node.y - interpolated_y[-1])
-    if d <= radius:
-        interpolated_x.append(to_node.x)
-        interpolated_y.append(to_node.y)
-    return interpolated_x, interpolated_y
-
-
-class ObstacleBase(metaclass=ABCMeta):
-    @abstractmethod
-    def is_collide(self, from_node, to_node, radius):
-        pass
-
-
-class CircleObstacle(ObstacleBase):
-    def __init__(self, x, y, r):
-        self.x = x
-        self.y = y
-        self.r = r
-
-    def is_collide(self, from_node, to_node, radius):
-        x, y = linear_interpolate(from_node, to_node, radius)
-        for i in range(len(x)):
-            distance = math.sqrt((x[i] - self.x) ** 2 + (y[i] - self.y) ** 2)
-            if distance <= (radius + self.r):
-                return True
-        return False
-
-
-class RectangleObstacle(ObstacleBase):
-    def __init__(self, x, y, width, height):
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-
-    def is_collide(self, from_node, to_node, radius):
-        x, y = linear_interpolate(from_node, to_node, radius)
-        for i in range(len(x)):
-            circle = Point(x[i], y[i]).buffer(radius)
-            rectangle = box(self.x - self.width / 2.0, self.y - self.height / 2.0, self.x + self.width / 2.0,
-                            self.y + self.height / 2.0)
-
-            if rectangle.intersects(circle):
-                return True
-        return False
-
-
 class USTRRRTstar:
-    def __init__(self, start, goal, width, height, robot_radius, lambda_factor, expand_dis, obstacles, near_radius, max_iter):
-        # set start and goal
-        self.start = Node(start[0], start[1])
-        self.start.space_time_cost = 0
-        self.goal = Node(goal[0], goal[1])
-        self.goal.space_time_cost = float("inf")
-
-        # set map size
-        self.width = width
-        self.height = height
-        self.max_time = 1
-        self.obstacles = obstacles
-
-        # set parameters
+    def __init__(self,
+                 start_point: list,
+                 goal_point: list,
+                 dimension: int,
+                 space_limit: list,
+                 obstalces: list,
+                 robot_radius: float,
+                 lambda_factor: float,
+                 max_expand_dis: float,
+                 neighbor_radius: float,
+                 max_iter: int, ):
+        self.start_point = start_point
+        self.goal_point = goal_point
+        self.dimension = dimension
+        self.space_limit = space_limit
+        self.obstacles = obstalces
         self.robot_radius = robot_radius
         self.lambda_factor = lambda_factor
-        self.expand_dis = expand_dis
+        self.max_expand_dis = max_expand_dis
+        self.neighbor_radius = neighbor_radius
         self.max_iter = max_iter
 
-        # set nodes
-        self.node_list = set()
-        self.node_list.add(self.start)
-        self.near_radius = near_radius
+        self.max_time = 1
+        self.space_cost = float("inf")
+        self.time_cost = float("inf")
+        self.space_time_cost = float("inf")
+        self.node_list = list()
+        self.conflict_node_list = list()
+
+        self.start_node = Node(start_point, 0)
+        self.start_node.space_cost = 0
+        self.start_node.time_cost = 0
+        self.start_node.space_time_cost = 0
+        self.goal_node = Node(goal_point, -1)
         self.last_node = None
 
         # set figure
@@ -129,16 +57,12 @@ class USTRRRTstar:
         self.draw_result = False
 
     def planning(self):
-        self.last_node = Node(0, 0, 0, None)
-        self.last_node.space_time_cost = float("inf")
-        i = 0
-        while True:
-            i += 1
-            if i > self.max_iter and self.last_node.space_time_cost != float("inf"):
-                break
-            rand_node = self.get_random_node()
-            nearest_node = self.get_nearest_node(rand_node)
-            new_node = self.steer(nearest_node, rand_node)
+        self.last_node = None
+        for i in range(self.max_iter):
+            rand_vector, random_time = self.get_random_state()
+            random_node = Node(rand_vector, random_time)
+            nearest_node = self.get_nearest_node(random_node)
+            new_node = self.steer(nearest_node, random_node)
 
             # check if new node is out of width and height
             right_of_new_node = new_node.x + self.robot_radius
@@ -186,7 +110,8 @@ class USTRRRTstar:
                     goal_node.t = new_node.t + 1
                     goal_node.parent = new_node
                     new_node.children.append(goal_node)
-                    goal_node.space_time_cost = new_node.space_time_cost + self.get_space_time_distance(new_node, goal_node)
+                    goal_node.space_time_cost = new_node.space_time_cost + self.get_space_time_distance(new_node,
+                                                                                                        goal_node)
 
                     if self.last_node.space_time_cost > goal_node.space_time_cost:
                         self.node_list.add(goal_node)
@@ -212,27 +137,56 @@ class USTRRRTstar:
         space_time_distance = self.lambda_factor * space_distance + (1 - self.lambda_factor) * time_distance
         return space_time_distance
 
-    def get_random_node(self):
-        return Node(
-            np.random.uniform(0, self.width),
-            np.random.uniform(0, self.height),
-            np.random.uniform(0, self.max_time))
+    # TODO : Implemented
+    def get_random_state(self):
+        random_vector = list()
+        for i in range(self.dimension):
+            random_vector.append(random.uniform(0, self.space_limit[i]))
+        random_time = random.randint(1, self.max_time)
+        return random_vector, random_time
 
-    def get_nearest_node(self, rand_node):
-        return min(self.node_list, key=lambda node: self.get_space_time_distance(rand_node, node) if (rand_node.t > node.t and node.is_valid and not node.is_infected) else float('inf'))
+    # TODO : Implemented
+    def get_nearest_node(self, random_node):
+        nearest_node = None
+        min_space_time_distance = float("inf")
+        for node in self.node_list:
+            if node.is_invalid:
+                continue
+            if random_node.time <= node.time:
+                continue
+
+            space_time_distance = Utils.calculate_space_time_distance(random_node, node, self.lambda_factor)
+            if space_time_distance < min_space_time_distance:
+                nearest_node = node
+                min_space_time_distance = space_time_distance
+        return nearest_node
 
     def steer(self, from_node: Node, to_node: Node):
-        d = from_node.space_distance(to_node)
-        if d > self.expand_dis:
-            d = self.expand_dis
-        theta = math.atan2(to_node.y - from_node.y, to_node.x - from_node.x)
-        new_node = Node(
-            from_node.x + d * math.cos(theta),
-            from_node.y + d * math.sin(theta),
-            from_node.t + 1
-        )
-        new_node.parent = from_node
-        new_node.space_time_cost = from_node.space_time_cost + self.get_space_time_distance(from_node, new_node)
+        expand_distance = Utils.calculate_space_distance(from_node, to_node)
+
+        if expand_distance > self.max_expand_dis:
+            expand_distance = self.max_expand_dis
+
+        # TODO it should be updated for n-dimension
+        theta = math.atan2(to_node.config_point[1] - from_node.config_point[1],
+                           to_node.config_point[0] - from_node.config_point[0])
+        new_config_vector = [
+            from_node.config_point[0] + expand_distance * math.cos(theta),
+            from_node.config_point[1] + expand_distance * math.sin(theta)
+        ]
+
+
+        # d = from_node.space_distance(to_node)
+        # if d > self.expand_dis:
+        #     d = self.expand_dis
+        # theta = math.atan2(to_node.y - from_node.y, to_node.x - from_node.x)
+        # new_node = Node(
+        #     from_node.x + d * math.cos(theta),
+        #     from_node.y + d * math.sin(theta),
+        #     from_node.t + 1
+        # )
+        # new_node.parent = from_node
+        # new_node.space_time_cost = from_node.space_time_cost + self.get_space_time_distance(from_node, new_node)
         return new_node
 
     def is_near_goal(self, node: Node):
@@ -275,7 +229,8 @@ class USTRRRTstar:
             if nearby_node.t - new_node.t != 1:
                 continue
             potential_cost = nearby_node.space_time_cost + self.get_space_time_distance(new_node, nearby_node)
-            if potential_cost < nearby_node.space_time_cost and not self.is_collide(new_node, nearby_node, self.obstacles):
+            if potential_cost < nearby_node.space_time_cost and not self.is_collide(new_node, nearby_node,
+                                                                                    self.obstacles):
                 nearby_node.parent.children.remove(nearby_node)
                 nearby_node.parent = new_node
                 nearby_node.space_time_cost = potential_cost
@@ -416,7 +371,7 @@ if __name__ == '__main__':
         CircleObstacle(5, 5, 2),
     ]
     space_time_rrt = USTRRRTstar(start=start, goal=goal, width=10.0, height=10.0, robot_radius=1,
-                                  lambda_factor=0.5, expand_dis=3, obstacles=obstacles, near_radius=3.0, max_iter=500)
+                                 lambda_factor=0.5, expand_dis=3, obstacles=obstacles, near_radius=3.0, max_iter=500)
     start_time = time.time()
     space_cost, time_cost, space_time_cost, path = space_time_rrt.planning()
     print(f"Time cost: {time.time() - start_time}s")
