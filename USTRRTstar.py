@@ -273,6 +273,20 @@ class USTRRRTstar:
         path.reverse()
         return path
 
+    def invalidate_node(self, node_to_invalidate: Node):
+        node_to_invalidate.is_invalid = True
+        for child in node_to_invalidate.children:
+            if child.is_invalid:
+                continue
+            self.invalidate_node(child)
+
+    def validate_node(self, node_to_validate: Node):
+        node_to_validate.is_invalid = False
+        for child in node_to_validate.children:
+            if not child.is_invalid:
+                continue
+            self.validate_node(child)
+
     @staticmethod
     def create_cube(center_x, center_y, width, height, depth):
         x, y = center_x - width / 2, center_y - height / 2

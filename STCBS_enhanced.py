@@ -101,7 +101,7 @@ class STCBS:
                 new_high_level_node = deepcopy(high_level_node)
                 new_conflict = new_high_level_node.solution[agent][conflict.time]
                 new_high_level_node.add_conflict_node(agent, new_conflict)
-                self.trees[agent].conflict_node_list = new_high_level_node.conflict_nodes
+                self.trees[agent].conflict_node_list = new_high_level_node.conflict_nodes[agent]
 
                 # update the invalid nodes
                 invalid_nodes = []
