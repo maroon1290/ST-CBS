@@ -106,8 +106,9 @@ class STCBS:
                 # update the invalid nodes
                 invalid_nodes = []
                 for conflict_node in new_high_level_node.conflict_nodes[agent]:
-                    conflict_node.is_conflict = True
                     for node in self.trees[agent].node_list:
+                        if node == conflict_node:
+                            conflict_node.is_conflict = True
                         # It includes itself
                         if node.time == conflict_node.time and Utils.calculate_space_distance(node, conflict_node) < self.robot_radii[agent] * 2:
                             node.is_invalid = True
