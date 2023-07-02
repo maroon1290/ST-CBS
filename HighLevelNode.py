@@ -35,6 +35,8 @@ class HighLevelNode:
             self.conflict_nodes[i] = list()
 
     def add_conflict_node(self, agent: int, conflict_node: Node):
+        if agent not in self.conflict_nodes:
+            self.conflict_nodes[agent] = list()
         self.conflict_nodes[agent].append(conflict_node)
 
     def add_space_cost(self, space_cost: float):

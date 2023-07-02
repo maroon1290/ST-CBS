@@ -54,8 +54,8 @@ class USTRRRTstar:
         self.last_node = None
 
         # set figure
-        self.animation = True
-        self.draw_result = True
+        self.animation = False
+        self.draw_result = False
 
     def planning(self):
         for i in range(self.max_iter):
@@ -139,7 +139,7 @@ class USTRRRTstar:
             x = from_node.config_point[0] * (1 - t) + to_node.config_point[0] * t
             y = from_node.config_point[1] * (1 - t) + to_node.config_point[1] * t
 
-            for obstacle in obstacles:
+            for obstacle in self.obstacles:
                 if obstacle.check_agent_collision(x, y, self.robot_radius):
                     return True
         return False
