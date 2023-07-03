@@ -58,6 +58,7 @@ class USTRRRTstar:
         self.draw_result = False
 
     def planning(self):
+        self.last_node = None
         for i in range(self.max_iter):
             rand_vector, random_time = self.get_random_state()
             random_node = Node(rand_vector, random_time)

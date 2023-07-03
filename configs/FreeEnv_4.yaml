@@ -43,7 +43,7 @@ goalPoints:
   - 24.44803115656529
 lambdaFactor: 0.5
 maxExpandDistance: 10.0
-maxIteration: 500
+maxIteration: 200
 neighborRadius: 10.0
 rectangleObstacles: []
 robotRadii:

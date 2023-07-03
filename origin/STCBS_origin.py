@@ -243,7 +243,7 @@ class STCBS:
 
 
 if __name__ == '__main__':
-    base_name = 'FreeEnv_4'
+    base_name = 'BaseEnv_4'
     with open(f'../configs/{base_name}.yaml') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
     obstacles = []

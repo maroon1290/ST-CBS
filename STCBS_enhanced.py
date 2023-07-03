@@ -20,6 +20,7 @@ from HighLevelNode import HighLevelNode
 from utils import Utils
 from Node import Node
 
+
 class Conflict:
     def __init__(self):
         self.time = None
@@ -90,6 +91,8 @@ class STCBS:
 
         cur_iter = 0
         while conflict_tree:
+            cur_iter += 1
+            print(f"cur_iter: {cur_iter}")
             high_level_node = heapq.heappop(conflict_tree)
 
             conflict = self.get_first_conflict(high_level_node)
@@ -120,10 +123,12 @@ class STCBS:
 
                 # planning conflict robot for the new node
                 new_path = self.trees[agent].planning()
+                if not new_path:
+                    continue
                 new_high_level_node.update_space_cost(agent, self.trees[agent].space_cost)
                 new_high_level_node.update_time_cost(agent, self.trees[agent].time_cost)
                 new_high_level_node.update_space_time_cost(agent, self.trees[agent].space_time_cost)
-                new_high_level_node.update_solution(agent, new_path)
+                new_high_level_node.update_path_in_solution(agent, new_path)
                 new_high_level_node.calculate_all_sum_of_costs()
                 self.coordinate_solution(new_high_level_node)
                 heapq.heappush(conflict_tree, new_high_level_node)
