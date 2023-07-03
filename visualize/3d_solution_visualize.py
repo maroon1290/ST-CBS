@@ -4,7 +4,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import yaml
 
-basename = "NarrowEnv_2"
+basename = "FreeEnv_4"
 config_file = f"../configs/{basename}.yaml"
 solution_file = f"../solutions/{basename}_solution.yaml"
 

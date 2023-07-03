@@ -82,7 +82,7 @@ class STCBS:
             root_node.add_time_cost(tree.time_cost)
             root_node.add_space_time_cost(tree.space_time_cost)
         root_node.calculate_all_sum_of_costs()
-        self.coordinate_solution(root_node)
+        # self.coordinate_solution(root_node)
         heapq.heappush(conflict_tree, root_node)
 
         cur_iter = 0
@@ -98,6 +98,8 @@ class STCBS:
 
             for agent in [conflict.agent1, conflict.agent2]:
                 new_high_level_node = deepcopy(high_level_node)
+                if len(new_high_level_node.solution[agent]) <= conflict.time:
+                    continue
                 conflict_node = new_high_level_node.solution[agent][conflict.time]
                 new_high_level_node.add_conflict_node(agent, conflict_node)
                 new_high_level_node.trees[agent].conflict_node_list = new_high_level_node.conflict_nodes[agent]
@@ -127,7 +129,7 @@ class STCBS:
                 new_high_level_node.update_space_time_cost(agent, new_high_level_node.trees[agent].space_time_cost)
                 new_high_level_node.update_path_in_solution(agent, new_path)
                 new_high_level_node.calculate_all_sum_of_costs()
-                self.coordinate_solution(new_high_level_node)
+                # self.coordinate_solution(new_high_level_node)
                 heapq.heappush(conflict_tree, new_high_level_node)
 
     def prune_children(self, node: Node, tree: USTRRRTstar):
@@ -142,6 +144,7 @@ class STCBS:
     def coordinate_solution(self, high_level_node: HighLevelNode):
         max_time_step = 0
         for path in high_level_node.solution:
+
             max_time_step = max(max_time_step, len(path))
 
         for i in range(self.robot_num):
@@ -160,11 +163,12 @@ class STCBS:
     # TODO: implemented
     def get_first_conflict(self, high_level_node: HighLevelNode):
         for (agent1, path1), (agent2, path2) in list(combinations(enumerate(high_level_node.solution), 2)):
-            for time in range(len(path1) - 1):
-                from_node1 = path1[time]
-                to_node1 = path1[time + 1]
-                from_node2 = path2[time]
-                to_node2 = path2[time + 1]
+            max_time_step = max(len(path1), len(path2))
+            for time in range(max_time_step):
+                from_node1 = path1[min(time, len(path1) - 1)]
+                to_node1 = path1[min(time + 1, len(path1) - 1)]
+                from_node2 = path2[min(time, len(path2) - 1)]
+                to_node2 = path2[min(time + 1, len(path2) - 1)]
                 if self.check_agents_collision(from_node1, to_node1, from_node2, to_node2):
                     conflict = Conflict()
                     conflict.agent1 = agent1
@@ -243,7 +247,7 @@ class STCBS:
 
 
 if __name__ == '__main__':
-    base_name = 'BaseEnv_4'
+    base_name = 'NarrowEnv_2'
     with open(f'../configs/{base_name}.yaml') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
     obstacles = []

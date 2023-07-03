@@ -5,7 +5,7 @@ from matplotlib.patches import Circle
 from matplotlib.patches import Rectangle, RegularPolygon
 import yaml
 
-basename = "NarrowEnv_2"
+basename = "FreeEnv_4"
 config_file = f"../configs/{basename}.yaml"
 solution_file = f"../solutions/{basename}_solution.yaml"
 
@@ -152,6 +152,11 @@ def update(frame):
 # 보간된 경로 데이터
 interpolated_solution = [interpolate_path(path, 100) for path in solution]
 
+# fill in the rest of the frames
+max_steps = max([len(path) for path in interpolated_solution])
+for path in interpolated_solution:
+    while len(path) < max_steps:
+        path.append(path[-1])
 ani = animation.FuncAnimation(fig, update, frames=zip(*interpolated_solution), interval=10, init_func=init, blit=True,
                               repeat=True)
 
