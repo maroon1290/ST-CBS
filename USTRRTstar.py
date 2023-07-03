@@ -119,8 +119,12 @@ class USTRRRTstar:
                             self.node_list.remove(self.last_node)
                         self.last_node = goal_node
                         self.node_list.append(goal_node)
+                        if self.conflict_node_list:
+                            break
 
         path = self.generate_path()
+        if not path:
+            return None
         self.space_cost = self.last_node.space_cost
         self.time_cost = self.last_node.time_cost
         self.space_time_cost = self.last_node.space_time_cost
