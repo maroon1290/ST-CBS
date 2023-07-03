@@ -118,8 +118,10 @@ class STCBS:
                     self.prune_children(child, new_high_level_node.trees[agent])
 
                 # planning conflict robot for the new node
-                new_high_level_node.trees[agent].max_iter = int(new_high_level_node.trees[agent].max_iter / 2)
+                # new_high_level_node.trees[agent].max_iter = int(new_high_level_node.trees[agent].max_iter / 2)
                 new_path = new_high_level_node.trees[agent].planning()
+                if new_path is None:
+                    continue
                 new_high_level_node.update_space_cost(agent, new_high_level_node.trees[agent].space_cost)
                 new_high_level_node.update_time_cost(agent, new_high_level_node.trees[agent].time_cost)
                 new_high_level_node.update_space_time_cost(agent, new_high_level_node.trees[agent].space_time_cost)

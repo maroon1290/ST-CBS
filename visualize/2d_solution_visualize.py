@@ -152,7 +152,7 @@ def update(frame):
 # 보간된 경로 데이터
 interpolated_solution = [interpolate_path(path, 100) for path in solution]
 
-ani = animation.FuncAnimation(fig, update, frames=zip(*interpolated_solution), interval=1, init_func=init, blit=True,
+ani = animation.FuncAnimation(fig, update, frames=zip(*interpolated_solution), interval=10, init_func=init, blit=True,
                               repeat=True)
 
 plt.show()

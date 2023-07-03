@@ -10,12 +10,12 @@ spaceLimits:
   - 20.0
   - 20.0
 robotRadii:
-  - 1.1
-  - 1.1
+  - 1.3
+  - 1.3
 lambdaFactor: 0.5
 maxExpandDistance: 3.0
 neighborRadius: 3.0
-maxIteration: 500
+maxIteration: 1000
 rectangleObstacles:
   - [10, 4, 20, 8]
   - [4, 16, 8, 8]
