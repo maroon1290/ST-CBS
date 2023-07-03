@@ -239,7 +239,7 @@ class STCBS:
 
 
 if __name__ == '__main__':
-    base_name = 'NarrowEnv_2'
+    base_name = 'BaseEnv_4'
     with open(f'../configs/{base_name}.yaml') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
     obstacles = []
@@ -265,4 +265,13 @@ if __name__ == '__main__':
         for node in path:
             print(f"x: {node.config_point[0]}, y: {node.config_point[1]}, time: {node.time}")
         print("-----------------")
+
+    dump_list = []
+    for path in solution:
+        dump_list.append([])
+        for node in path:
+            dump_list[-1].append([node.config_point[0], node.config_point[1], node.time])
+    with open(f"../solutions/{base_name}_solution.yaml", 'w') as f:
+        yaml.dump(dump_list, f)
+
     st_cbs.draw_paths_3d_graph(solution)

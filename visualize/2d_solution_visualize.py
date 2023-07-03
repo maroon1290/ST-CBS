@@ -5,9 +5,9 @@ from matplotlib.patches import Circle
 from matplotlib.patches import Rectangle, RegularPolygon
 import yaml
 
-basename = "NarrowEnv_2"
-config_file = f"configs/{basename}.yaml"
-solution_file = f"solutions/{basename}_solution.yaml"
+basename = "BaseEnv_4"
+config_file = f"../configs/{basename}.yaml"
+solution_file = f"../solutions/{basename}_solution.yaml"
 
 # configs 파일
 with open(config_file, 'r') as stream:
@@ -117,8 +117,8 @@ for rect_obstacle in config["rectangleObstacles"]:
 
 
 def init():
-    ax.set_xlim(0, config['spaceLimit'][0])
-    ax.set_ylim(0, config['spaceLimit'][1])
+    ax.set_xlim(0, config['spaceLimits'][0])
+    ax.set_ylim(0, config['spaceLimits'][1])
 
     for i, line in enumerate(lines):
         line.set_data([], [])
@@ -152,7 +152,7 @@ def update(frame):
 # 보간된 경로 데이터
 interpolated_solution = [interpolate_path(path, 100) for path in solution]
 
-ani = animation.FuncAnimation(fig, update, frames=zip(*interpolated_solution), interval=2, init_func=init, blit=True,
+ani = animation.FuncAnimation(fig, update, frames=zip(*interpolated_solution), interval=1, init_func=init, blit=True,
                               repeat=True)
 
 plt.show()
