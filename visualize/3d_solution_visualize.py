@@ -4,8 +4,9 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import yaml
 
-config_file = "configs/NarrowEnv_2.yaml"
-solution_file = "solutions/NarrowEnv_2_solution.yaml"
+basename = "NarrowEnv_2"
+config_file = f"../configs/{basename}.yaml"
+solution_file = f"../solutions/{basename}_solution.yaml"
 
 # configs 파일
 with open(config_file, 'r') as stream:
@@ -31,7 +32,8 @@ for path in solution:
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 ax.set_zlabel('Time')
-
+ax.set_xlim(0, config['spaceLimits'][0])
+ax.set_ylim(0, config['spaceLimits'][1])
 
 # 원기둥 그리기
 # circle_center = (5, 5)

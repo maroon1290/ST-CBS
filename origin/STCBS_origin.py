@@ -87,6 +87,8 @@ class STCBS:
 
         cur_iter = 0
         while conflict_tree:
+            cur_iter += 1
+            print(f"cur_iter: {cur_iter}")
             high_level_node = heapq.heappop(conflict_tree)
 
             conflict = self.get_first_conflict(high_level_node)
@@ -239,7 +241,7 @@ class STCBS:
 
 
 if __name__ == '__main__':
-    base_name = 'BaseEnv_4'
+    base_name = 'NarrowEnv_2'
     with open(f'../configs/{base_name}.yaml') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
     obstacles = []

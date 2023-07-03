@@ -5,7 +5,7 @@ from matplotlib.patches import Circle
 from matplotlib.patches import Rectangle, RegularPolygon
 import yaml
 
-basename = "BaseEnv_4"
+basename = "NarrowEnv_2"
 config_file = f"../configs/{basename}.yaml"
 solution_file = f"../solutions/{basename}_solution.yaml"
 
