@@ -1,9 +1,8 @@
 import math
 import random
 
-from shapely.geometry import Point, box
 from itertools import combinations
-from USTRRTstar import RectangleObstacle, CircleObstacle
+from nocopy.USTRRTstar import RectangleObstacle, CircleObstacle
 import time
 import os
 import yaml

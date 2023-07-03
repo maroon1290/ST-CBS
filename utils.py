@@ -1,4 +1,4 @@
-from Node import Node
+from nocopy.Node import Node
 import math
 
 

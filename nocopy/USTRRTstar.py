@@ -332,9 +332,9 @@ class USTRRRTstar:
                 x = [node.config_point[0], node.parent.config_point[0]]
                 y = [node.config_point[1], node.parent.config_point[1]]
                 z = [node.time, node.parent.time]
-                if node.is_invalid:
+                if node.is_invalid and not node.is_conflict:
                     ax.plot(x, y, z, color='red')
-                elif node.is_conflict:
+                elif node.is_invalid and node.is_conflict:
                     ax.plot(x, y, z, color='blue')
                 else:
                     ax.plot(x, y, z, color='black')

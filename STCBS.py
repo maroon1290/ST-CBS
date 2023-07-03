@@ -11,10 +11,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import yaml
 
-from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
-from USTRRTstar import USTRRRTstar, CircleObstacle, RectangleObstacle
+from nocopy.USTRRTstar import USTRRRTstar, CircleObstacle, RectangleObstacle
 
 
 class Conflict:

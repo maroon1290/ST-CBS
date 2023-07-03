@@ -86,7 +86,7 @@ class STCBS:
             root_node.add_time_cost(tree.time_cost)
             root_node.add_space_time_cost(tree.space_time_cost)
         root_node.calculate_all_sum_of_costs()
-        self.coordinate_solution(root_node)
+        # self.coordinate_solution(root_node)
         heapq.heappush(conflict_tree, root_node)
 
         cur_iter = 0
@@ -102,6 +102,8 @@ class STCBS:
 
             for agent in [conflict.agent1, conflict.agent2]:
                 new_high_level_node = deepcopy(high_level_node)
+                if len(new_high_level_node.solution[agent]) <= conflict.time:
+                    continue
                 new_conflict = new_high_level_node.solution[agent][conflict.time]
                 new_high_level_node.add_conflict_node(agent, new_conflict)
                 self.trees[agent].conflict_node_list = new_high_level_node.conflict_nodes[agent]
@@ -110,8 +112,8 @@ class STCBS:
                 invalid_nodes = []
                 for conflict_node in new_high_level_node.conflict_nodes[agent]:
                     for node in self.trees[agent].node_list:
-                        if node == conflict_node:
-                            conflict_node.is_conflict = True
+                        if node.time == conflict_node.time and Utils.calculate_space_distance(node, conflict_node) < 0.001:
+                            node.is_conflict = True
                         # It includes itself
                         if node.time == conflict_node.time and Utils.calculate_space_distance(node, conflict_node) < self.robot_radii[agent] * 2:
                             node.is_invalid = True
@@ -130,7 +132,7 @@ class STCBS:
                 new_high_level_node.update_space_time_cost(agent, self.trees[agent].space_time_cost)
                 new_high_level_node.update_path_in_solution(agent, new_path)
                 new_high_level_node.calculate_all_sum_of_costs()
-                self.coordinate_solution(new_high_level_node)
+                # self.coordinate_solution(new_high_level_node)
                 heapq.heappush(conflict_tree, new_high_level_node)
 
                 # validate conflict and invalid node
@@ -161,11 +163,12 @@ class STCBS:
     # TODO: implemented
     def get_first_conflict(self, high_level_node: HighLevelNode):
         for (agent1, path1), (agent2, path2) in list(combinations(enumerate(high_level_node.solution), 2)):
-            for time in range(len(path1) - 1):
-                from_node1 = path1[time]
-                to_node1 = path1[time + 1]
-                from_node2 = path2[time]
-                to_node2 = path2[time + 1]
+            max_time_step = max(len(path1), len(path2))
+            for time in range(max_time_step):
+                from_node1 = path1[min(time, len(path1) - 1)]
+                to_node1 = path1[min(time + 1, len(path1) - 1)]
+                from_node2 = path2[min(time, len(path2) - 1)]
+                to_node2 = path2[min(time + 1, len(path2) - 1)]
                 if self.check_agents_collision(from_node1, to_node1, from_node2, to_node2):
                     conflict = Conflict()
                     conflict.agent1 = agent1
@@ -244,19 +247,27 @@ class STCBS:
 
 
 if __name__ == '__main__':
+    with open("../BaseName.yaml", 'r') as stream:
+        basename_yaml = yaml.load(stream, Loader=yaml.FullLoader)
+        basename = basename_yaml["basename"]
+    with open(f'../configs/{basename}.yaml') as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+    obstacles = []
+    for rect_obstacle in config["rectangleObstacles"]:
+        obstacles.append(RectangleObstacle(rect_obstacle[0], rect_obstacle[1], rect_obstacle[2], rect_obstacle[3]))
     # run ST-CBS
     st_cbs = STCBS(
-        robot_num=4,
-        start_points=[[2, 2], [2, 8], [8, 2], [8, 8]],
-        goal_points=[[8, 8], [8, 2], [2, 8], [2, 2]],
-        dimensions=2,
-        space_limits=[10, 10],
-        robot_radii=[0.5, 0.5, 0.5, 0.5],
-        obstacles=[RectangleObstacle(5, 5, 2, 2)],
-        lambda_factor=0.5,
-        max_expand_distance=3,
-        neighbor_radius=3,
-        max_iter=500,
+        robot_num=config["robotNum"],
+        start_points=config["startPoints"],
+        goal_points=config["goalPoints"],
+        dimensions=config["dimensions"],
+        space_limits=config["spaceLimits"],
+        robot_radii=config["robotRadii"],
+        obstacles=obstacles,
+        lambda_factor=config["lambdaFactor"],
+        max_expand_distance=config["maxExpandDistance"],
+        neighbor_radius=config["neighborRadius"],
+        max_iter=config["maxIteration"],
     )
 
     solution = st_cbs.planning()
@@ -264,4 +275,13 @@ if __name__ == '__main__':
         for node in path:
             print(f"x: {node.config_point[0]}, y: {node.config_point[1]}, time: {node.time}")
         print("-----------------")
+
+    dump_list = []
+    for path in solution:
+        dump_list.append([])
+        for node in path:
+            dump_list[-1].append([node.config_point[0], node.config_point[1], node.time])
+    with open(f"../solutions/{basename}_solution.yaml", 'w') as f:
+        yaml.dump(dump_list, f)
+
     st_cbs.draw_paths_3d_graph(solution)
