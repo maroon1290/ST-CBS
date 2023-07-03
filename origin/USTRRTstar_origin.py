@@ -102,7 +102,7 @@ class USTRRRTstar:
             if new_node.time + 1 >= self.max_time:
                 self.max_time += 1
 
-            if self.animation and i % 10 == 0:
+            if self.animation and i % 20 == 0:
                 self.draw_nodes_edge_3d_graph()
 
             if self.is_near_goal(new_node):

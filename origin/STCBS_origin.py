@@ -16,6 +16,10 @@ from HighLevelNode_origin import HighLevelNode
 from utils import Utils
 from Node_origin import Node
 
+fig = plt.figure(figsize=(10, 10))
+ax = fig.add_subplot(111, projection='3d')
+ax.view_init(elev=30., azim=120)
+
 class Conflict:
     def __init__(self):
         self.time = None
@@ -52,9 +56,6 @@ class STCBS:
         self.max_expand_distance = max_expand_distance
         self.neighbor_radius = neighbor_radius
         self.max_iter = max_iter
-
-        self.fig = plt.figure(figsize=(10, 10))
-        self.ax = self.fig.add_subplot(111, projection='3d')
 
     def planning(self):
         conflict_tree = []
@@ -104,6 +105,7 @@ class STCBS:
                     self.prune_children(child, new_high_level_node.trees[agent])
 
                 # planning conflict robot for the new node
+                new_high_level_node.trees[agent].max_iter = int(new_high_level_node.trees[agent].max_iter / 2)
                 new_path = new_high_level_node.trees[agent].planning()
                 new_high_level_node.update_space_cost(agent, new_high_level_node.trees[agent].space_cost)
                 new_high_level_node.update_time_cost(agent, new_high_level_node.trees[agent].time_cost)
@@ -200,28 +202,28 @@ class STCBS:
 
     def draw_paths_3d_graph(self, solution):
         max_time = max([len(path) for path in solution])
-        self.ax.cla()
-        self.ax.set_xlim3d(0, self.space_limits[0])
-        self.ax.set_ylim3d(0, self.space_limits[1])
-        self.ax.set_zlim3d(0, max_time)
-        self.ax.set_xlabel('X')
-        self.ax.set_ylabel('Y')
-        self.ax.set_zlabel('T')
-        self.ax.set_yticklabels([])
-        self.ax.set_xticklabels([])
-        self.ax.set_zticklabels([])
-        self.ax.set_title('High Level of ST-CBS')
+        ax.cla()
+        ax.set_xlim3d(0, self.space_limits[0])
+        ax.set_ylim3d(0, self.space_limits[1])
+        ax.set_zlim3d(0, max_time)
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('T')
+        ax.set_yticklabels([])
+        ax.set_xticklabels([])
+        ax.set_zticklabels([])
+        ax.set_title('High Level of ST-CBS')
         for path in solution:
             x = [node.config_point[0] for node in path]
             y = [node.config_point[1] for node in path]
             t = [node.time for node in path]
-            self.ax.plot(x, y, t)
+            ax.plot(x, y, t)
         for obstacle in self.obstacles:
             # Rectangle Obstacle
             if type(obstacle) == RectangleObstacle:
                 cube_faces = self.create_cube(obstacle.x, obstacle.y, obstacle.width, obstacle.height, max_time)
                 face_collection = Poly3DCollection(cube_faces, facecolor='b', alpha=0.1, linewidths=1, edgecolors='k')
-                self.ax.add_collection3d(face_collection)
+                ax.add_collection3d(face_collection)
         plt.show()
 
 
@@ -246,4 +248,4 @@ if __name__ == '__main__':
         for node in path:
             print(f"x: {node.config_point[0]}, y: {node.config_point[1]}, time: {node.time}")
         print("-----------------")
-    # st_cbs.draw_paths_3d_graph(solution)
+    st_cbs.draw_paths_3d_graph(solution)
