@@ -6,6 +6,7 @@ from USTRRTstar_origin import USTRRRTstar
 class HighLevelNode:
     def __init__(self):
         self.trees = list()
+        self.conflict_nodes = dict()
         self.space_costs = list()
         self.time_costs = list()
         self.space_time_costs = list()
@@ -49,6 +50,11 @@ class HighLevelNode:
 
     def add_path_to_solution(self, path: list):
         self.solution.append(path)
+
+    def add_conflict_node(self, agent: int, conflict_node: Node):
+        if agent not in self.conflict_nodes:
+            self.conflict_nodes[agent] = list()
+        self.conflict_nodes[agent].append(conflict_node)
 
     def update_space_cost(self, agent: int, space_cost: float):
         self.space_costs[agent] = space_cost

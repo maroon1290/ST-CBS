@@ -54,12 +54,14 @@ class USTRRRTstar:
         self.last_node = None
 
         # set figure
-        self.animation = False
+        self.animation = True
         self.draw_result = False
 
     def planning(self):
         self.last_node = None
-        for i in range(self.max_iter):
+        iter = 0
+        while iter < self.max_iter or self.last_node is None:
+            iter += 1
             rand_vector, random_time = self.get_random_state()
             random_node = Node(rand_vector, random_time)
             nearest_node = self.get_nearest_node(random_node)
@@ -102,7 +104,7 @@ class USTRRRTstar:
             if new_node.time + 1 >= self.max_time:
                 self.max_time += 1
 
-            if self.animation and i % 20 == 0:
+            if self.animation and iter % 5 == 0:
                 self.draw_nodes_edge_3d_graph()
 
             if self.is_near_goal(new_node):

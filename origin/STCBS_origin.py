@@ -3,6 +3,7 @@
 import heapq
 import math
 from copy import deepcopy
+import yaml
 from itertools import combinations
 
 import matplotlib.pyplot as plt
@@ -96,10 +97,20 @@ class STCBS:
             for agent in [conflict.agent1, conflict.agent2]:
                 new_high_level_node = deepcopy(high_level_node)
                 conflict_node = new_high_level_node.solution[agent][conflict.time]
+                new_high_level_node.add_conflict_node(agent, conflict_node)
+                new_high_level_node.trees[agent].conflict_node_list = new_high_level_node.conflict_nodes[agent]
                 conflict_node.is_conflict = True
                 conflict_node.is_invalid = True
 
-                # update the invalid nodes
+                # prune the neighbors of the conflict node
+                for node in new_high_level_node.trees[agent].node_list:
+                    if node == conflict_node:
+                        continue
+
+                    if node.time == conflict_node.time and Utils.calculate_space_distance(node, conflict_node) < self.robot_radii[agent] * 2:
+                        self.prune_children(node, new_high_level_node.trees[agent])
+
+                # prune the children of the conflict node
                 while conflict_node.children:
                     child = conflict_node.children.pop()
                     self.prune_children(child, new_high_level_node.trees[agent])
@@ -228,19 +239,25 @@ class STCBS:
 
 
 if __name__ == '__main__':
+    base_name = 'NarrowEnv_2'
+    with open(f'../configs/{base_name}.yaml') as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+    obstacles = []
+    for rect_obstacle in config["rectangleObstacles"]:
+        obstacles.append(RectangleObstacle(rect_obstacle[0], rect_obstacle[1], rect_obstacle[2], rect_obstacle[3]))
     # run ST-CBS
     st_cbs = STCBS(
-        robot_num=4,
-        start_points=[[2, 2], [2, 8], [8, 2], [8, 8]],
-        goal_points=[[8, 8], [8, 2], [2, 8], [2, 2]],
-        dimensions=2,
-        space_limits=[10, 10],
-        robot_radii=[0.5, 0.5, 0.5, 0.5],
-        obstacles=[RectangleObstacle(5, 5, 2, 2)],
-        lambda_factor=0.5,
-        max_expand_distance=3,
-        neighbor_radius=3,
-        max_iter=500,
+        robot_num=config["robotNum"],
+        start_points=config["startPoints"],
+        goal_points=config["goalPoints"],
+        dimensions=config["dimensions"],
+        space_limits=config["spaceLimits"],
+        robot_radii=config["robotRadii"],
+        obstacles=obstacles,
+        lambda_factor=config["lambdaFactor"],
+        max_expand_distance=config["maxExpandDistance"],
+        neighbor_radius=config["neighborRadius"],
+        max_iter=config["maxIteration"],
     )
 
     solution = st_cbs.planning()
