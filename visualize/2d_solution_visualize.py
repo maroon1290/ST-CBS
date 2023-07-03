@@ -5,7 +5,9 @@ from matplotlib.patches import Circle
 from matplotlib.patches import Rectangle, RegularPolygon
 import yaml
 
-basename = "FreeEnv_4"
+with open("../BaseName.yaml", 'r') as stream:
+    basename_yaml = yaml.load(stream, Loader=yaml.FullLoader)
+    basename = basename_yaml["basename"]
 config_file = f"../configs/{basename}.yaml"
 solution_file = f"../solutions/{basename}_solution.yaml"
 

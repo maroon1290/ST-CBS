@@ -3,6 +3,10 @@ import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 import yaml
 
+with open("../BaseName.yaml", 'r') as stream:
+    basename_yaml = yaml.load(stream, Loader=yaml.FullLoader)
+    basename = basename_yaml["basename"]
+
 # 로봇의 경로
 with open("paths/path.yaml", 'r') as stream:
     path = yaml.load(stream, Loader=yaml.FullLoader)

@@ -4,7 +4,10 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import yaml
 
-basename = "FreeEnv_4"
+
+with open("../BaseName.yaml", 'r') as stream:
+    basename_yaml = yaml.load(stream, Loader=yaml.FullLoader)
+    basename = basename_yaml["basename"]
 config_file = f"../configs/{basename}.yaml"
 solution_file = f"../solutions/{basename}_solution.yaml"
 
