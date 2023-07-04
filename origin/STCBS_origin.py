@@ -5,6 +5,7 @@ import math
 from copy import deepcopy
 import yaml
 from itertools import combinations
+import matplotrecorder
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -90,6 +91,8 @@ class STCBS:
             cur_iter += 1
             print(f"cur_iter: {cur_iter}")
             high_level_node = heapq.heappop(conflict_tree)
+
+            self.draw_paths_3d_graph(high_level_node.solution)
 
             conflict = self.get_first_conflict(high_level_node)
 
@@ -236,14 +239,15 @@ class STCBS:
             x = [node.config_point[0] for node in path]
             y = [node.config_point[1] for node in path]
             t = [node.time for node in path]
-            ax.plot(x, y, t)
+            ax.plot(x, y, t, marker='o')
         for obstacle in self.obstacles:
             # Rectangle Obstacle
             if type(obstacle) == RectangleObstacle:
                 cube_faces = self.create_cube(obstacle.x, obstacle.y, obstacle.width, obstacle.height, max_time)
-                face_collection = Poly3DCollection(cube_faces, facecolor='b', alpha=0.1, linewidths=1, edgecolors='k')
+                face_collection = Poly3DCollection(cube_faces, facecolor='b', alpha=0.05, linewidths=1, edgecolors='k')
                 ax.add_collection3d(face_collection)
-        plt.show()
+        matplotrecorder.save_frame()
+        plt.pause(0.1)
 
 
 if __name__ == '__main__':

@@ -79,7 +79,7 @@ def check_collision_obstacles(robot, obstacles):
     return False
 
 
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(15, 15))
 
 # 로봇과 궤적을 저장할 리스트들
 robots = []
@@ -99,12 +99,12 @@ for i, path in enumerate(solution):
     ln, = ax.plot([], [], color=colors[i])
     lines.append(ln)
 
-    start = Rectangle((0, 0), 0.5, 0.5, color=colors[i], alpha=0.5)  # small square with transparency
-    start.xy = path[0][0] - 0.25, path[0][1] - 0.25  # set bottom left corner
+    start = Rectangle((0, 0), 0.25, 0.25, color=colors[i], alpha=0.5)  # small square with transparency
+    start.xy = path[0][0] - 0.125, path[0][1] - 0.125  # set bottom left corner
     ax.add_patch(start)
     starts.append(start)
 
-    end = RegularPolygon((0, 0), 3, 0.5, color=colors[i], alpha=0.5)  # triangle with transparency
+    end = RegularPolygon((0, 0), 3, 0.25, color=colors[i], alpha=0.5)  # triangle with transparency
     end.xy = path[-1][0], path[-1][1]  # set bottom left corner
     ax.add_patch(end)
     ends.append(end)
@@ -152,14 +152,14 @@ def update(frame):
 
 
 # 보간된 경로 데이터
-interpolated_solution = [interpolate_path(path, 100) for path in solution]
+interpolated_solution = [interpolate_path(path, 50) for path in solution]
 
 # fill in the rest of the frames
 max_steps = max([len(path) for path in interpolated_solution])
 for path in interpolated_solution:
     while len(path) < max_steps:
         path.append(path[-1])
-ani = animation.FuncAnimation(fig, update, frames=zip(*interpolated_solution), interval=10, init_func=init, blit=True,
+ani = animation.FuncAnimation(fig, update, frames=zip(*interpolated_solution), interval=5, init_func=init, blit=True,
                               repeat=True)
-
+ani.save('animation.mp4', writer='ffmpeg', fps=60)
 plt.show()
