@@ -161,5 +161,5 @@ for path in interpolated_solution:
         path.append(path[-1])
 ani = animation.FuncAnimation(fig, update, frames=zip(*interpolated_solution), interval=5, init_func=init, blit=True,
                               repeat=True)
-ani.save('animation.mp4', writer='ffmpeg', fps=60)
+# ani.save('animation.mp4', writer='ffmpeg', fps=60)
 plt.show()

@@ -92,8 +92,6 @@ class STCBS:
             print(f"cur_iter: {cur_iter}")
             high_level_node = heapq.heappop(conflict_tree)
 
-            self.draw_paths_3d_graph(high_level_node.solution)
-
             conflict = self.get_first_conflict(high_level_node)
 
             if conflict is None:
@@ -246,7 +244,7 @@ class STCBS:
                 cube_faces = self.create_cube(obstacle.x, obstacle.y, obstacle.width, obstacle.height, max_time)
                 face_collection = Poly3DCollection(cube_faces, facecolor='b', alpha=0.05, linewidths=1, edgecolors='k')
                 ax.add_collection3d(face_collection)
-        matplotrecorder.save_frame()
+        # matplotrecorder.save_frame()
         plt.pause(0.1)
 
 
