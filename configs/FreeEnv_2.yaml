@@ -1,0 +1,19 @@
+robotNum: 2
+startPoints:
+  - [8, 5]
+  - [2, 5]
+goalPoints:
+  - [2, 5]
+  - [8, 5]
+dimensions: 2
+spaceLimits:
+  - 10.0
+  - 10.0
+robotRadii:
+  - 1.0
+  - 1.0
+lambdaFactor: 0.5
+maxExpandDistance: 3.0
+neighborRadius: 3.0
+maxIteration: 100
+rectangleObstacles: []

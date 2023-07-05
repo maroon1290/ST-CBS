@@ -9,7 +9,7 @@ with open("../BaseName.yaml", 'r') as stream:
     basename_yaml = yaml.load(stream, Loader=yaml.FullLoader)
     basename = basename_yaml["basename"]
 config_file = f"../configs/{basename}.yaml"
-solution_file = f"../solutions/{basename}_solution.yaml"
+solution_file = f"../solutions/{basename}_solution_8.yaml"
 
 # configs 파일
 with open(config_file, 'r') as stream:
@@ -77,11 +77,11 @@ def create_cube(center_x, center_y, width, height, depth):
 
 
 # find max time in solution
-max_time = max(solution[0], key=lambda x: x[2])[2]
-for rect_obstacle in config["rectangleObstacles"]:
-    cube_faces = create_cube(rect_obstacle[0], rect_obstacle[1], rect_obstacle[2], rect_obstacle[3], max_time)
-    face_collection = Poly3DCollection(cube_faces, facecolor='b', alpha=0.1, linewidths=1, edgecolors='k')
-    ax.add_collection3d(face_collection)
+# max_time = max(solution[0], key=lambda x: x[2])[2]
+# for rect_obstacle in config["rectangleObstacles"]:
+#     cube_faces = create_cube(rect_obstacle[0], rect_obstacle[1], rect_obstacle[2], rect_obstacle[3], max_time)
+#     face_collection = Poly3DCollection(cube_faces, facecolor='b', alpha=0.1, linewidths=1, edgecolors='k')
+#     ax.add_collection3d(face_collection)
 
 # 그래프 출력
 plt.show()

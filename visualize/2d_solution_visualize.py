@@ -52,7 +52,7 @@ def check_collision_obstacles(robot, obstacles):
 
         x = robot.center[0]
         y = robot.center[1]
-        r = robot.radius
+        r = robot.radius - 0.05
 
         # Define the rectangle's bounds
         rect_left = center_x - width / 2
@@ -79,7 +79,7 @@ def check_collision_obstacles(robot, obstacles):
     return False
 
 
-fig, ax = plt.subplots(figsize=(15, 15))
+fig, ax = plt.subplots(figsize=(10, 10))
 
 # 로봇과 궤적을 저장할 리스트들
 robots = []
@@ -92,7 +92,7 @@ colors = ['blue', 'green', 'purple', 'orange', 'yellow', 'brown', 'pink', 'cyan'
 
 # 로봇, 궤적, 시작점, 종료점 생성 및 초기화
 for i, path in enumerate(solution):
-    robot = Circle((0, 0), config['robotRadii'][i], fill=False, color=colors[i])
+    robot = Circle((0, 0), config['robotRadii'][i], fill=False, color=colors[i], linewidth=3)
     ax.add_patch(robot)
     robots.append(robot)
 
@@ -159,7 +159,7 @@ max_steps = max([len(path) for path in interpolated_solution])
 for path in interpolated_solution:
     while len(path) < max_steps:
         path.append(path[-1])
-ani = animation.FuncAnimation(fig, update, frames=zip(*interpolated_solution), interval=5, init_func=init, blit=True,
-                              repeat=True)
-# ani.save('animation.mp4', writer='ffmpeg', fps=60)
+ani = animation.FuncAnimation(fig, update, frames=zip(*interpolated_solution), interval=1, init_func=init, blit=True,
+                              repeat=False)
+ani.save('animation.mp4', fps=60)
 plt.show()
